@@ -1,5 +1,5 @@
 // Cliente dos três serviços da Receita Federal e regras do processamento em lote.
-// Usado pelo painel (navegador) e pela linha de comando (Node 18+).
+// Usado pelo painel (navegador) e pela linha de comando (Node 22+).
 
 import { decimal, numero, inteiro, dataISO, dataHoraISO, decimalBR } from './formato.js';
 
@@ -168,9 +168,7 @@ export const UFS = {
 // ---------------------------------------------------------------------------
 
 function idOperacao() {
-  const bytes = new Uint8Array(16);
-  if (globalThis.crypto?.getRandomValues) globalThis.crypto.getRandomValues(bytes);
-  else for (let i = 0; i < bytes.length; i++) bytes[i] = Math.floor(Math.random() * 256); // Node 18 sem webcrypto global
+  const bytes = crypto.getRandomValues(new Uint8Array(16));
   return [...bytes].map((b) => b.toString(16).padStart(2, '0')).join('');
 }
 

@@ -6,7 +6,7 @@
 
 [![Testes](https://github.com/PedrosHttps/central-rtc/actions/workflows/testes.yml/badge.svg)](https://github.com/PedrosHttps/central-rtc/actions/workflows/testes.yml)
 [![Licença MIT](https://img.shields.io/badge/licen%C3%A7a-MIT-5a2d82)](LICENSE)
-[![Node 18+](https://img.shields.io/badge/node-18%2B-15253a)](painel/package.json)
+[![Node 22+](https://img.shields.io/badge/node-22%2B-15253a)](painel/package.json)
 [![Docker Compose](https://img.shields.io/badge/docker-compose-15253a)](docker-compose.yml)
 
 [Página do projeto](https://pedroshttps.github.io/central-rtc/) ·
@@ -84,7 +84,7 @@ As portas ficam presas ao `127.0.0.1`, então só o seu computador acessa.
 1. Suba cada serviço seguindo o README do repositório dele. Você vai precisar de Java 25 (regime geral e Simples) e Go 1.27 (DANFSe).
    - O Simples Nacional usa o mesmo banco do regime geral: copie `calculadora/db/calculadora-pro.db` gerado no regime geral para a mesma pasta dentro do projeto do Simples.
    - O DANFSe também usa a porta 8080 por padrão. Rode com `SERVER_PORT=8081`.
-2. Rode o painel (Node 18 ou mais novo, sem `npm install`):
+2. Rode o painel (Node 22 ou mais novo, sem `npm install`):
 
 ```bash
 cd painel

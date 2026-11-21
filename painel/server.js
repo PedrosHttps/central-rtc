@@ -1,5 +1,5 @@
 // Painel da Central RTC: serve a interface e repassa as chamadas para os três serviços da Receita.
-// Sem dependências: precisa só do Node 18 ou mais novo.
+// Sem dependências: precisa só do Node 22 ou mais novo.
 
 import http from 'node:http';
 import { readFile } from 'node:fs/promises';

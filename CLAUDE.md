@@ -34,7 +34,7 @@ Com os serviços reais: `docker compose up -d --build` na raiz.
 
 ## Regras e convenções
 
-- Sem dependências npm. Node 18+ (há fallback para `crypto.getRandomValues` no Node 18).
+- Sem dependências npm. Node 22+.
 - Textos da interface em português, voz ativa, tom natural; botões dizem exatamente o que fazem.
 - Identidade visual: campos como células de formulário fiscal (`.ficha` / `.campo`), estado dos itens como carimbo (`.carimbo` com `data-tom` ok/erro/aviso/neutro). Cores e fontes (Barlow, Barlow Semi Condensed, locais em `public/fontes/`) estão em variáveis no topo de `styles.css`.
 - Use `trocar(el, ...filhos)` em vez de `replaceChildren` quando houver filhos condicionais (evita "null" na tela).
