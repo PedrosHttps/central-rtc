@@ -1,0 +1,4 @@
+﻿operacao;dhFatoGerador;municipio;uf;tpDoc;tpEnteGov;item;ncm;nbs;cst;cClassTrib;baseCalculo;quantidade;unidade;aliqCBS;aliqIBSUF;aliqIBSMun;isCst;isClassTrib;isBaseCalculo;isQuantidade;isUnidade;isImpostoInformado;isAdValorem;isAdRem
+NF-2001;10/03/2027 10:00;1302603;AM;;;1;10063021;;200;200003;100,00;20;KG;8,8;0,05;0,05;;;;;;;;
+NF-2001;10/03/2027 10:00;1302603;AM;;;2;;122011200;200;200028;1200,00;;;8,8;0,05;0,05;;;;;;;;
+NF-2002;11/03/2027 15:30;1302603;AM;;;1;22030000;;000;000001;;12;LT;8,8;0,05;0,05;000;000001;150,00;12;LT;15,00;10;

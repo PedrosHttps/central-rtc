@@ -1,0 +1,7 @@
+node_modules/
+*-resultado.csv
+*-respostas.json
+danfse/
+*.zip
+.env
+CONVERSA-CLAUDE-AI.md

@@ -1,0 +1,24 @@
+name: Testes
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  testes:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node: [18, 20, 22]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+      - name: Testes das bibliotecas
+        working-directory: painel
+        run: npm run teste
+      - name: Sintaxe do painel e da CLI
+        working-directory: painel
+        run: node --check server.js && node --check cli.js && node --check public/app.js

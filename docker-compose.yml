@@ -1,0 +1,52 @@
+# Central RTC: sobe os três serviços oficiais da Receita Federal e o painel.
+#
+#   docker compose up -d --build      (a primeira vez leva alguns minutos: baixa dependências e gera o banco)
+#   abra http://localhost:3000
+#
+# As portas ficam presas ao 127.0.0.1: só este computador acessa.
+
+name: central-rtc
+
+services:
+  regime-geral:
+    build:
+      context: ./docker
+      dockerfile: java.Dockerfile
+      target: regime-geral
+    ports:
+      - "127.0.0.1:8080:8080"
+    restart: unless-stopped
+
+  simples-nacional:
+    build:
+      context: ./docker
+      dockerfile: java.Dockerfile
+      target: simples-nacional
+    ports:
+      - "127.0.0.1:8082:8082"
+    restart: unless-stopped
+
+  danfse:
+    # Usa o Dockerfile do próprio repositório da Receita.
+    build:
+      context: https://github.com/ReceitaFederal/calculadora-rtc-gerador-danfse.git#main
+    environment:
+      SERVER_PORT: "8080"
+    ports:
+      - "127.0.0.1:8081:8080"
+    restart: unless-stopped
+
+  painel:
+    build:
+      context: ./painel
+    environment:
+      RG_URL: http://regime-geral:8080/api
+      SN_URL: http://simples-nacional:8082/api
+      DANFSE_URL: http://danfse:8080
+    ports:
+      - "127.0.0.1:3000:3000"
+    depends_on:
+      - regime-geral
+      - simples-nacional
+      - danfse
+    restart: unless-stopped

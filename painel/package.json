@@ -1,0 +1,19 @@
+{
+  "name": "central-rtc",
+  "version": "1.0.0",
+  "description": "Painel e automação em lote para as calculadoras da Reforma Tributária do Consumo e o gerador de DANFSe da Receita Federal",
+  "type": "module",
+  "private": true,
+  "license": "MIT",
+  "engines": {
+    "node": ">=18"
+  },
+  "bin": {
+    "central-rtc": "./cli.js"
+  },
+  "scripts": {
+    "start": "node server.js",
+    "simulador": "node dev/mock-servicos.js",
+    "teste": "node --test dev/lib.test.js"
+  }
+}

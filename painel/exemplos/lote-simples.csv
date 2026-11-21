@@ -1,0 +1,4 @@
+﻿operacao;data;tpDoc;CRT;tpRegimeIBSCBS;tpEnteGov;item;cAtivSN;cClassTrib;baseCalculo;valorImpostoSeletivo;pIBSSN;pCBSSN
+NF-1001;15/03/2027;55;1;;;1;01;000001;950,00;50,00;1,25;2,75
+NF-1001;15/03/2027;55;1;;;2;03;000001;1200,00;0,00;1,10;2,40
+NF-1002;16/03/2027;65;1;;;1;01;000001;89,90;0,00;1,25;2,75

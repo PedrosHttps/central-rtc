@@ -1,0 +1,320 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Central RTC</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect x='3' y='3' width='26' height='26' rx='3' fill='none' stroke='%235A2D82' stroke-width='3'/%3E%3Cpath d='M9 12h14M9 17h14M9 22h8' stroke='%2315253A' stroke-width='2.5'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="styles.css">
+  <script type="module" src="app.js"></script>
+</head>
+<body>
+  <a class="pular" href="#conteudo">Pular para o conteúdo</a>
+
+  <header class="topo">
+    <div class="marca">
+      <span class="marca-nome">Central RTC</span>
+      <span class="marca-sub">Calculadoras da reforma tributária e DANFSe, num lugar só</span>
+    </div>
+    <div class="servicos" aria-live="polite">
+      <ul id="servicos" class="servicos-lista"></ul>
+      <button type="button" id="btn-status" class="botao botao-discreto">Verificar de novo</button>
+    </div>
+  </header>
+
+  <p id="aviso-simulador" class="faixa faixa-aviso" hidden>
+    Conectado ao simulador de desenvolvimento: os valores mostrados são fictícios e servem só para testar a interface.
+  </p>
+  <p id="aviso-offline" class="faixa faixa-erro" hidden></p>
+
+  <div class="estrutura">
+    <nav class="menu" aria-label="Seções">
+      <button type="button" data-secao="simples" aria-current="page">Simples Nacional</button>
+      <button type="button" data-secao="rg">Regime geral</button>
+      <button type="button" data-secao="consultas">Consultas</button>
+      <button type="button" data-secao="danfse">DANFSe</button>
+      <button type="button" data-secao="lote">Em lote</button>
+    </nav>
+
+    <main id="conteudo">
+      <!-- ============================================================ Simples Nacional -->
+      <section id="secao-simples" class="secao">
+        <h1>Simples Nacional</h1>
+        <p class="lead">Calcule IBS e CBS de empresas do Simples conforme a NT 2026.005 e veja quais atividades e anexos valem na data.</p>
+
+        <div class="abas" role="tablist">
+          <button type="button" role="tab" data-aba="sn-calculo" aria-selected="true">Cálculo</button>
+          <button type="button" role="tab" data-aba="sn-atividades" aria-selected="false">Atividades e anexos</button>
+        </div>
+
+        <div id="sn-calculo" class="painel-aba">
+          <form id="form-sn" novalidate>
+            <div class="ficha" role="group" aria-label="Dados da operação">
+              <label class="campo"><span>Data do fato gerador</span><input type="date" name="data" required></label>
+              <label class="campo"><span>Documento</span><select name="tpDoc" data-documentos></select></label>
+              <label class="campo"><span>Regime tributário (CRT)</span>
+                <select name="CRT">
+                  <option value="1">1 — Simples Nacional</option>
+                  <option value="2">2 — Simples, excesso de sublimite</option>
+                  <option value="3">3 — Regime normal</option>
+                  <option value="4">4 — MEI</option>
+                </select>
+              </label>
+              <label class="campo"><span>Apuração do IBS/CBS</span>
+                <select name="tpRegimeIBSCBS">
+                  <option value="">Não informar</option>
+                  <option value="1">1 — Regular</option>
+                  <option value="2">2 — Por fora (só CRT 3)</option>
+                </select>
+              </label>
+              <label class="campo"><span>Compra governamental</span>
+                <select name="tpEnteGov">
+                  <option value="">Não é</option>
+                  <option value="1">União</option>
+                  <option value="2">Estado</option>
+                  <option value="3">Distrito Federal</option>
+                  <option value="4">Município</option>
+                </select>
+              </label>
+            </div>
+
+            <h2 class="titulo-bloco">Itens</h2>
+            <div id="sn-itens" class="itens"></div>
+
+            <div class="acoes">
+              <button type="button" class="botao" data-adicionar>Adicionar item</button>
+              <button type="button" class="botao botao-discreto" data-exemplo>Preencher exemplo</button>
+              <button type="submit" class="botao botao-principal">Calcular</button>
+            </div>
+          </form>
+          <div id="sn-resultado" class="resultado" aria-live="polite"></div>
+        </div>
+
+        <div id="sn-atividades" class="painel-aba" hidden>
+          <form id="form-ativ" novalidate>
+            <div class="ficha">
+              <label class="campo"><span>Data de referência</span><input type="date" name="data" required></label>
+              <label class="campo"><span>Documento</span><select name="tpDoc" data-documentos data-opcional></select></label>
+              <label class="campo"><span>Classificação (cClassTrib)</span><input name="cClassTrib" inputmode="numeric" maxlength="6" placeholder="Opcional"></label>
+              <fieldset class="campo campo-largo">
+                <legend>Anexos que a empresa usa</legend>
+                <div class="marcadores">
+                  <label><input type="checkbox" name="anexos" value="I"> I</label>
+                  <label><input type="checkbox" name="anexos" value="II"> II</label>
+                  <label><input type="checkbox" name="anexos" value="III"> III</label>
+                  <label><input type="checkbox" name="anexos" value="IV"> IV</label>
+                  <label><input type="checkbox" name="anexos" value="V"> V</label>
+                </div>
+              </fieldset>
+            </div>
+            <div class="acoes">
+              <button type="submit" class="botao botao-principal">Consultar atividades</button>
+            </div>
+          </form>
+          <div id="ativ-resultado" class="resultado" aria-live="polite"></div>
+        </div>
+      </section>
+
+      <!-- ============================================================ Regime geral -->
+      <section id="secao-rg" class="secao" hidden>
+        <h1>Regime geral</h1>
+        <p class="lead">CBS, IBS e Imposto Seletivo por item, com memória de cálculo. Depois, gere e valide o XML do grupo de tributação.</p>
+
+        <form id="form-rg" novalidate>
+          <div class="ficha" role="group" aria-label="Dados da operação">
+            <label class="campo"><span>Data e hora do fato gerador</span><input type="datetime-local" name="dhFatoGerador" required></label>
+            <label class="campo"><span>Município (código IBGE)</span><input name="municipio" inputmode="numeric" maxlength="7" required></label>
+            <label class="campo campo-curto"><span>UF</span><select name="uf" data-ufs></select></label>
+            <label class="campo"><span>Documento</span><select name="tpDoc" data-documentos data-opcional></select></label>
+            <label class="campo"><span>Compra governamental</span>
+              <select name="tpEnteGov">
+                <option value="">Não é</option>
+                <option value="1">União</option>
+                <option value="2">Estado</option>
+                <option value="3">Distrito Federal</option>
+                <option value="4">Município</option>
+              </select>
+            </label>
+          </div>
+          <p class="nota" id="rg-nota-aliquotas"></p>
+
+          <h2 class="titulo-bloco">Itens</h2>
+          <div id="rg-itens" class="itens"></div>
+
+          <div class="acoes">
+            <button type="button" class="botao" data-adicionar>Adicionar item</button>
+            <button type="button" class="botao botao-discreto" data-exemplo>Preencher exemplo</button>
+            <button type="submit" class="botao botao-principal">Calcular</button>
+          </div>
+        </form>
+        <div id="rg-resultado" class="resultado" aria-live="polite"></div>
+
+        <div id="rg-xml" class="bloco-xml" hidden>
+          <h2 class="titulo-bloco">XML do grupo de tributação</h2>
+          <div class="ficha">
+            <label class="campo"><span>Tipo de documento</span>
+              <select name="tipoXml">
+                <option value="nfe">NF-e</option>
+                <option value="nfce">NFC-e</option>
+                <option value="cte">CT-e</option>
+                <option value="cte-simplificado">CT-e simplificado</option>
+                <option value="bpe">BP-e</option>
+                <option value="bpe-tm">BP-e TM</option>
+                <option value="nf3e">NF3e</option>
+              </select>
+            </label>
+          </div>
+          <div class="acoes">
+            <button type="button" class="botao botao-principal" id="btn-gerar-xml">Gerar e validar XML</button>
+          </div>
+          <div id="rg-xml-saida" aria-live="polite"></div>
+        </div>
+      </section>
+
+      <!-- ============================================================ Consultas -->
+      <section id="secao-consultas" class="secao" hidden>
+        <h1>Consultas</h1>
+        <p class="lead">As tabelas oficiais que a calculadora usa: classificações tributárias, NCM, NBS, alíquotas de referência e códigos de erro.</p>
+        <form id="form-consulta" novalidate>
+          <div class="ficha">
+            <label class="campo campo-largo"><span>O que consultar</span>
+              <select name="tipo">
+                <option value="classtrib">Classificação tributária (cClassTrib)</option>
+                <option value="ncm">NCM</option>
+                <option value="nbs">NBS</option>
+                <option value="nbs-aplicaveis">NBS aplicáveis a uma cClassTrib</option>
+                <option value="aliq-uniao">Alíquota de referência da União (CBS)</option>
+                <option value="aliq-uf">Alíquota de referência da UF (IBS)</option>
+                <option value="aliq-mun">Alíquota de referência do município (IBS)</option>
+                <option value="erro-rg">Código de erro do regime geral (REG-…)</option>
+                <option value="erro-sn">Código de erro do Simples (VSN-…)</option>
+              </select>
+            </label>
+            <label class="campo" data-campo-codigo><span data-rotulo-codigo>Código</span><input name="codigo" autocomplete="off"></label>
+            <label class="campo" data-campo-data><span>Data</span><input type="date" name="data"></label>
+          </div>
+          <div class="acoes">
+            <button type="submit" class="botao botao-principal">Consultar</button>
+          </div>
+        </form>
+        <div id="consulta-resultado" class="resultado" aria-live="polite"></div>
+      </section>
+
+      <!-- ============================================================ DANFSe -->
+      <section id="secao-danfse" class="secao" hidden>
+        <h1>DANFSe</h1>
+        <p class="lead">Transforme XMLs de NFS-e autorizadas em PDF: uma nota ou uma pasta inteira de uma vez.</p>
+
+        <label class="soltar" id="danfse-soltar">
+          <input type="file" id="danfse-arquivos" accept=".xml,text/xml,application/xml" multiple>
+          <span class="soltar-titulo">Arraste os XMLs para cá</span>
+          <span class="soltar-sub">ou clique para escolher. Até 5 MB por arquivo.</span>
+        </label>
+
+        <div class="ficha">
+          <label class="campo"><span>Situação da nota</span>
+            <select id="danfse-stc">
+              <option value="0">Válida</option>
+              <option value="1">Substituída</option>
+              <option value="2">Cancelada</option>
+            </select>
+          </label>
+          <label class="campo campo-marcador"><span>Canhoto</span>
+            <span class="marcador"><input type="checkbox" id="danfse-canhoto" checked> Incluir canhoto de recebimento</span>
+          </label>
+        </div>
+
+        <div class="acoes">
+          <button type="button" class="botao botao-principal" id="btn-danfse-gerar" disabled>Gerar PDFs</button>
+          <button type="button" class="botao" id="btn-danfse-zip" disabled>Baixar todos (.zip)</button>
+          <button type="button" class="botao botao-discreto" id="btn-danfse-limpar" disabled>Limpar lista</button>
+        </div>
+
+        <ul id="danfse-lista" class="lista-arquivos"></ul>
+        <iframe id="danfse-previa" class="previa-pdf" title="Pré-visualização do DANFSe" hidden></iframe>
+      </section>
+
+      <!-- ============================================================ Lote -->
+      <section id="secao-lote" class="secao" hidden>
+        <h1>Em lote</h1>
+        <p class="lead">Calcule muitos itens a partir de uma planilha CSV. Cada linha é um item; a coluna <code>operacao</code> junta os itens da mesma nota.</p>
+
+        <form id="form-lote" novalidate>
+          <div class="ficha">
+            <label class="campo"><span>Tipo de cálculo</span>
+              <select name="tipo">
+                <option value="simples">Simples Nacional</option>
+                <option value="regime-geral">Regime geral</option>
+              </select>
+            </label>
+            <label class="campo campo-largo"><span>Planilha (.csv)</span><input type="file" name="arquivo" accept=".csv,text/csv"></label>
+          </div>
+          <div class="acoes">
+            <button type="button" class="botao" id="btn-modelo">Baixar planilha modelo</button>
+            <button type="submit" class="botao botao-principal" id="btn-lote" disabled>Processar planilha</button>
+          </div>
+        </form>
+
+        <div id="lote-previa" aria-live="polite"></div>
+        <div id="lote-progresso" class="progresso" hidden><div class="progresso-barra"></div><span class="progresso-texto"></span></div>
+        <div id="lote-resultado" class="resultado" aria-live="polite"></div>
+
+        <p class="nota">Para automatizar sem abrir o navegador (no agendador do sistema, por exemplo), use a linha de comando: <code>node cli.js lote simples planilha.csv</code>. Os detalhes estão no README.</p>
+      </section>
+    </main>
+  </div>
+
+  <footer class="rodape">
+    As calculadoras e o gerador de DANFSe são projetos de código aberto da Receita Federal. A Central RTC só organiza as chamadas; confira os resultados antes de usá-los em documentos fiscais.
+  </footer>
+
+  <template id="tpl-item-sn">
+    <div class="item" data-item>
+      <span class="item-numero" aria-hidden="true"></span>
+      <div class="ficha ficha-item">
+        <label class="campo campo-largo"><span>Atividade (cAtivSN)</span><select name="cAtivSN" data-atividades></select></label>
+        <label class="campo"><span>cClassTrib</span><input name="cClassTrib" inputmode="numeric" maxlength="6" value="000001"></label>
+        <label class="campo"><span>Base de cálculo (R$)</span><input name="baseCalculo" inputmode="decimal" placeholder="0,00"></label>
+        <label class="campo"><span>Imposto Seletivo (R$)</span><input name="valorImpostoSeletivo" inputmode="decimal" placeholder="0,00"></label>
+        <label class="campo"><span>Alíquota IBS (%)</span><input name="pIBSSN" inputmode="decimal" placeholder="0,00"></label>
+        <label class="campo"><span>Alíquota CBS (%)</span><input name="pCBSSN" inputmode="decimal" placeholder="0,00"></label>
+      </div>
+      <button type="button" class="remover" data-remover aria-label="Remover item">Remover</button>
+    </div>
+  </template>
+
+  <template id="tpl-item-rg">
+    <div class="item" data-item>
+      <span class="item-numero" aria-hidden="true"></span>
+      <div class="ficha ficha-item">
+        <label class="campo campo-curto"><span>Tipo</span>
+          <select name="tipoCodigo"><option value="ncm">NCM</option><option value="nbs">NBS</option></select>
+        </label>
+        <label class="campo"><span data-rotulo-codigo>Código NCM</span><input name="codigo" inputmode="numeric" maxlength="9"></label>
+        <label class="campo campo-curto"><span>CST</span><input name="cst" inputmode="numeric" maxlength="3" value="000"></label>
+        <label class="campo"><span>cClassTrib</span><input name="cClassTrib" inputmode="numeric" maxlength="6" value="000001"></label>
+        <label class="campo"><span>Base de cálculo (R$)</span><input name="baseCalculo" inputmode="decimal" placeholder="0,00"></label>
+        <label class="campo campo-curto"><span>Qtd.</span><input name="quantidade" inputmode="decimal"></label>
+        <label class="campo campo-curto"><span>Unid.</span><input name="unidade" maxlength="6"></label>
+        <label class="campo" data-aliquota><span>Alíquota CBS (%)</span><input name="aliqCBS" inputmode="decimal"></label>
+        <label class="campo" data-aliquota><span>IBS estadual (%)</span><input name="aliqIBSUF" inputmode="decimal"></label>
+        <label class="campo" data-aliquota><span>IBS municipal (%)</span><input name="aliqIBSMun" inputmode="decimal"></label>
+      </div>
+      <details class="grupo-is">
+        <summary>Imposto Seletivo neste item</summary>
+        <div class="ficha ficha-item">
+          <label class="campo campo-curto"><span>CST do IS</span><input name="isCst" inputmode="numeric" maxlength="3"></label>
+          <label class="campo"><span>cClassTrib do IS</span><input name="isClassTrib" inputmode="numeric" maxlength="6"></label>
+          <label class="campo"><span>Base do IS (R$)</span><input name="isBaseCalculo" inputmode="decimal"></label>
+          <label class="campo campo-curto"><span>Qtd.</span><input name="isQuantidade" inputmode="decimal"></label>
+          <label class="campo campo-curto"><span>Unid.</span><input name="isUnidade" maxlength="6"></label>
+          <label class="campo"><span>IS informado (R$)</span><input name="isImpostoInformado" inputmode="decimal"></label>
+          <label class="campo" data-aliquota><span>Ad valorem (%)</span><input name="isAdValorem" inputmode="decimal"></label>
+          <label class="campo" data-aliquota><span>Ad rem</span><input name="isAdRem" inputmode="decimal"></label>
+        </div>
+      </details>
+      <button type="button" class="remover" data-remover aria-label="Remover item">Remover</button>
+    </div>
+  </template>
+</body>
+</html>
