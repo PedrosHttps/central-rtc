@@ -127,17 +127,18 @@ No Windows, use o Agendador de Tarefas com o programa `node` e os argumentos `cl
 | `PORTA` | `3000` | Porta do painel |
 | `HOST` | `127.0.0.1` | Interface do painel (`0.0.0.0` só dentro do Docker) |
 | `PAINEL_USUARIO` e `PAINEL_SENHA` | vazias (sem login) | Ligam a tela de login. Essa é a conta do administrador, que cadastra as outras pessoas. Obrigatórias antes de deixar o painel acessível por outros aparelhos. A senha precisa ter 12 caracteres ou mais. No Docker, coloque as duas no arquivo `.env` da raiz, que fica fora do Git. |
-| `PAINEL_EMAIL_ACESSO` | vazia | E-mail do link **Pedir acesso** na tela de login. Vazia, o link não aparece. |
+| `PAINEL_EMAIL_ACESSO` | vazia | E-mail de contato mostrado na tela de login. Vazia, o contato não aparece. |
+| `PAINEL_TOKEN_REVISAO` | vazia | Chave (32 caracteres ou mais) da revisão automática de pedidos. Com `Authorization: Bearer <chave>` só dá para `GET /api/pedidos` e `POST /api/usuarios/<e-mail>/aprovar` ou `recusar`. |
 | `PAINEL_DADOS` | `painel/dados` | Pasta do `usuarios.json`, com as contas cadastradas (só o hash das senhas). No Docker fica no volume `contas`. |
 
 ### Contas de usuário
 
-Com o login ligado:
-1. Quem não tem conta clica em **Pedir acesso** na tela de login e manda um e-mail.
-2. O administrador entra, abre **Usuários**, cadastra a pessoa e responde com o usuário e a senha provisória que o painel mostra.
-3. No primeiro acesso, o painel obriga a pessoa a trocar a senha. Depois, ela pode trocar em **Trocar senha**.
+Com o login ligado, há dois caminhos para alguém ganhar acesso:
 
-Na mesma tela, o administrador gera uma senha provisória nova para quem esqueceu ou remove o acesso de quem saiu. A pessoa removida sai na hora.
+- **A pessoa pede sozinha:** em **Criar conta**, na tela de login, ela informa nome, e-mail (que vira o usuário), empresa, motivo e a senha que escolher. A conta nasce **em análise** e só funciona depois de aprovada. O mesmo endereço de internet só consegue fazer 3 pedidos por hora, e o painel aceita no máximo 100 pedidos aguardando análise.
+- **O administrador cadastra:** em **Usuários**, ele cria a conta com uma senha provisória. No primeiro acesso, o painel obriga a pessoa a trocar essa senha.
+
+Os pedidos são aprovados ou recusados pelo administrador, também em **Usuários**, ou por uma revisão automática que usa a chave . Por exemplo, uma tarefa agendada do Claude Code que lê os pedidos e decide seguindo regras escritas. A tela mostra quem decidiu e por quê. Em **Usuários**, o administrador também gera uma senha provisória nova para quem esqueceu e remove o acesso de quem saiu. Quem é removido sai na hora.
 
 Depois de 10 senhas erradas em 15 minutos, o endereço de internet fica sem conseguir entrar por 15 minutos. As sessões duram 12 horas e só existem na memória: reiniciar o painel pede login de novo a todos.
 

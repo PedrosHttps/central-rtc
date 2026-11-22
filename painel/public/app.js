@@ -1077,6 +1077,7 @@ function dialogoTrocarSenha(obrigatorio) {
 
 function dialogoUsuarios() {
   const msg = caixaMensagem();
+  const pedidos = h('div', {});
   const lista = h('div', { class: 'tabela-rolagem' }, 'Carregando…');
   const credenciais = (usuario, senha, texto) => [
     h('strong', { text: texto }),
@@ -1084,24 +1085,61 @@ function dialogoUsuarios() {
     h('p', { text: 'No primeiro acesso o painel pede para ela trocar a senha.' }),
   ];
 
+  const SITUACAO = {
+    ativo: ['Ativo', 'ok'],
+    provisoria: ['Senha provisória', 'aviso'],
+    pendente: ['Em análise', 'aviso'],
+    recusado: ['Recusado', 'erro'],
+  };
+  const dataBR = (iso) => new Date(iso).toLocaleDateString('pt-BR');
+
   async function carregar() {
     const { admin, usuarios } = await api('/api/usuarios');
     const botao = (texto, fn) => h('button', { type: 'button', class: 'botao botao-discreto', onclick: fn }, texto);
+    const aguardando = usuarios.filter((u) => u.status === 'pendente');
+    trocar(pedidos,
+      aguardando.length ? h('h3', { class: 'titulo-bloco', text: `Pedidos aguardando análise (${aguardando.length})` }) : null,
+      aguardando.map((u) => h('div', { class: 'pedido' },
+        h('strong', { text: `${u.pedido?.nome || '—'} · ${u.usuario}` }),
+        h('p', { text: [u.pedido?.empresa, `pediu em ${dataBR(u.criadoEm)}`].filter(Boolean).join(' · ') }),
+        h('p', { class: 'pedido-motivo', text: u.pedido?.motivo || '' }),
+        h('div', { class: 'acoes-linha' },
+          botao('Aprovar', () => decidir(u.usuario, 'aprovar')),
+          botao('Recusar', () => decidir(u.usuario, 'recusar')),
+        ),
+      )),
+    );
     trocar(lista, h('table', { class: 'tabela' },
       h('thead', {}, h('tr', {}, h('th', { text: 'Usuário' }), h('th', { text: 'Cadastro' }), h('th', { text: 'Situação' }), h('th', {}))),
       h('tbody', {},
         h('tr', {}, h('td', { text: admin }), h('td', { text: '—' }), h('td', { text: 'Administrador (senha no .env)' }), h('td', {})),
-        usuarios.map((u) => h('tr', {},
-          h('td', { text: u.usuario }),
-          h('td', { text: new Date(u.criadoEm).toLocaleDateString('pt-BR') }),
-          h('td', {}, carimbo(u.trocarSenha ? 'Senha provisória' : 'Ativo', u.trocarSenha ? 'aviso' : 'ok')),
-          h('td', { class: 'acoes-linha' },
-            botao('Nova senha', () => novaSenha(u.usuario)),
-            botao('Remover', () => remover(u.usuario)),
-          ),
-        )),
+        usuarios.filter((u) => u.status !== 'pendente').map((u) => {
+          const [texto, tom] = SITUACAO[u.status === 'ativo' && u.trocarSenha ? 'provisoria' : u.status] || SITUACAO.ativo;
+          const d = u.decisao;
+          return h('tr', {},
+            h('td', { text: u.usuario }),
+            h('td', { text: dataBR(u.criadoEm) }),
+            h('td', {}, carimbo(texto, tom),
+              d ? h('small', { class: 'decisao', text: `${d.acao === 'aprovar' ? 'Aprovado' : 'Recusado'} por ${d.por}${d.observacao ? `: ${d.observacao}` : ''}` }) : null),
+            h('td', { class: 'acoes-linha' },
+              u.status === 'ativo' ? botao('Nova senha', () => novaSenha(u.usuario)) : null,
+              botao('Remover', () => remover(u.usuario)),
+            ),
+          );
+        }),
       ),
     ));
+  }
+
+  async function decidir(usuario, acao) {
+    if (acao === 'recusar' && !confirm(`Recusar o pedido de ${usuario}?`)) return;
+    try {
+      await api(`/api/usuarios/${encodeURIComponent(usuario)}/${acao}`, { metodo: 'POST', corpo: {} });
+      mostrar(msg, 'ok', `Pedido de ${usuario} ${acao === 'aprovar' ? 'aprovado: a pessoa já consegue entrar' : 'recusado'}.`);
+      await carregar();
+    } catch (e) {
+      mostrar(msg, 'erro', e.message);
+    }
   }
 
   async function novaSenha(usuario) {
@@ -1154,7 +1192,7 @@ function dialogoUsuarios() {
     }
   });
 
-  abrirDialogo('Usuários', h('div', {}, msg, lista, form));
+  abrirDialogo('Usuários', h('div', {}, msg, pedidos, h('h3', { class: 'titulo-bloco', text: 'Contas' }), lista, form));
   carregar().catch((e) => mostrar(msg, 'erro', e.message));
 }
 

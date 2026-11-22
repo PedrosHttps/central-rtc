@@ -141,12 +141,15 @@ test('leitura do resultado do regime geral (formato da documentação oficial)',
   assert.equal(it.vIBS, '0.48');
 });
 
+const CHAVE_REVISAO = 'chave-de-revisao-de-teste-com-mais-de-32-caracteres';
+
 // Sobe o painel de verdade com login e uma pasta de dados temporária; devolve funções para fazer requisições.
 async function subirPainel(t, porta) {
   const dados = mkdtempSync(path.join(tmpdir(), 'central-rtc-'));
   const env = {
     ...process.env, PORTA: String(porta), HOST: '127.0.0.1', PAINEL_DADOS: dados,
     PAINEL_USUARIO: 'ana', PAINEL_SENHA: 'senha-de-teste-123', PAINEL_EMAIL_ACESSO: 'acesso@exemplo.com',
+    PAINEL_TOKEN_REVISAO: CHAVE_REVISAO,
   };
   const filho = spawn(process.execPath, [fileURLToPath(new URL('../server.js', import.meta.url))], { env });
   t.after(() => {
@@ -249,4 +252,55 @@ test('Painel: bloqueia o endereço que erra a senha demais', async (t) => {
   for (let i = 1; i <= 10; i++) assert.equal((await entrar('ana', `errada-${i}`, `2001:db8:1:2::${i}`)).status, 401);
   assert.equal((await entrar('ana', 'senha-de-teste-123', '2001:0db8:0001:0002:ffff::99')).status, 429);
   assert.equal((await entrar('ana', 'senha-de-teste-123', '2001:db8:1:3::1')).status, 200);
+});
+
+test('Painel: a pessoa pede acesso sozinha e a revisão aprova ou recusa', async (t) => {
+  const { pedir, entrar } = await subirPainel(t, 39519);
+  const pedirAcesso = (dados, ip = '10.0.1.1') => pedir('/api/cadastro', { metodo: 'POST', corpo: dados, ip });
+  const revisao = (caminho, metodo = 'GET', chave = CHAVE_REVISAO) =>
+    fetch(`http://127.0.0.1:39519${caminho}`, {
+      method: metodo,
+      headers: { authorization: `Bearer ${chave}`, 'content-type': 'application/json', 'x-forwarded-for': '10.0.9.9' },
+      body: metodo === 'POST' ? JSON.stringify({ observacao: 'pedido coerente' }) : undefined,
+    });
+  const bia = { nome: 'Bia Souza', email: 'Bia@Empresa.com.br', empresa: 'Empresa', motivo: 'Calcular IBS e CBS das notas', senha: 'senha-da-bia-123' };
+
+  assert.equal((await pedir('/cadastro.html')).status, 200);
+  assert.equal((await pedirAcesso({ ...bia, email: 'sem-arroba' })).status, 400);
+  assert.equal((await pedirAcesso({ ...bia, senha: 'curta' })).status, 400);
+  assert.equal((await pedirAcesso(bia)).status, 201);
+
+  // Em análise: senha certa não entra; senha errada nem revela a situação.
+  const pendente = await entrar('bia@empresa.com.br', 'senha-da-bia-123');
+  assert.equal(pendente.status, 403);
+  assert.match(pendente.dados.mensagem, /em análise/);
+  assert.equal((await entrar('bia@empresa.com.br', 'outra-senha-qualquer')).status, 401);
+
+  // Pedir de novo com o mesmo e-mail responde igual e não troca a senha (não revela quem tem conta).
+  assert.equal((await pedirAcesso({ ...bia, senha: 'senha-do-intruso-1' })).status, 201);
+
+  // A chave de revisão lista pedidos e decide; não faz mais nada. Chave errada é recusada.
+  assert.equal((await revisao('/api/pedidos', 'GET', 'chave-errada')).status, 401);
+  const { pedidos } = await (await revisao('/api/pedidos')).json();
+  assert.deepEqual(pedidos.map((p) => [p.usuario, p.nome, p.motivo]), [['bia@empresa.com.br', 'Bia Souza', bia.motivo]]);
+  assert.equal((await revisao('/api/usuarios')).status, 403);
+  assert.equal((await revisao('/status')).status, 403);
+  assert.equal((await revisao('/api/usuarios/bia%40empresa.com.br/aprovar', 'POST')).status, 200);
+  assert.equal((await revisao('/api/usuarios/bia%40empresa.com.br/recusar', 'POST')).status, 409); // já decidido
+  const bia2 = await entrar('bia@empresa.com.br', 'senha-da-bia-123');
+  assert.equal(bia2.status, 200);
+  assert.equal(bia2.dados.trocarSenha, false);
+  assert.equal((await entrar('bia@empresa.com.br', 'senha-do-intruso-1')).status, 401);
+
+  // Recusado não entra; o administrador vê quem decidiu.
+  assert.equal((await pedirAcesso({ ...bia, nome: 'Robô', email: 'spam@spam.com', motivo: 'compre já compre já' }, '10.0.1.2')).status, 201);
+  assert.equal((await revisao('/api/usuarios/spam%40spam.com/recusar', 'POST')).status, 200);
+  assert.match((await entrar('spam@spam.com', 'senha-da-bia-123')).dados.mensagem, /recusado/);
+  const admin = await entrar('ana', 'senha-de-teste-123');
+  const { usuarios } = await (await pedir('/api/usuarios', { sessao: admin.sessao })).json();
+  assert.equal(usuarios.find((u) => u.usuario === 'spam@spam.com').decisao.por, 'revisão automática');
+
+  // No máximo 3 pedidos por hora do mesmo endereço.
+  for (let i = 0; i < 3; i++) assert.equal((await pedirAcesso({ ...bia, email: `p${i}@x.com` }, '10.0.1.3')).status, 201);
+  assert.equal((await pedirAcesso({ ...bia, email: 'p9@x.com' }, '10.0.1.3')).status, 429);
 });

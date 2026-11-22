@@ -24,13 +24,18 @@ const ADMIN = (process.env.PAINEL_USUARIO || '').trim().toLowerCase();
 const SENHA_ADMIN = process.env.PAINEL_SENHA || '';
 const EMAIL_ACESSO = process.env.PAINEL_EMAIL_ACESSO || '';
 const ARQUIVO_USUARIOS = path.join(process.env.PAINEL_DADOS || path.join(PASTA, 'dados'), 'usuarios.json');
+// Chave da revisão automática de pedidos de conta: só lista pedidos e aprova/recusa, nada mais.
+const TOKEN_REVISAO = process.env.PAINEL_TOKEN_REVISAO || '';
 const COM_LOGIN = Boolean(SENHA_ADMIN);
 const SENHA_MIN = 12;
-const NOME_VALIDO = /^[a-z0-9.@-]{3,64}$/;
+const NOME_VALIDO = /^[a-z0-9._+@-]{3,64}$/;
+const EMAIL_VALIDO = /^[a-z0-9._+-]+@[a-z0-9-]+(\.[a-z0-9-]+)+$/;
+const REGRA_NOME = 'use de 3 a 64 letras minúsculas, números ou os sinais . _ + - @';
 
 if (!ADMIN !== !SENHA_ADMIN) throw new Error('Defina PAINEL_USUARIO e PAINEL_SENHA juntos.');
-if (ADMIN && !NOME_VALIDO.test(ADMIN)) throw new Error('PAINEL_USUARIO: use de 3 a 64 letras minúsculas, números, ponto, hífen ou @.');
+if (ADMIN && !NOME_VALIDO.test(ADMIN)) throw new Error(`PAINEL_USUARIO: ${REGRA_NOME}.`);
 if (SENHA_ADMIN && SENHA_ADMIN.length < SENHA_MIN) throw new Error(`PAINEL_SENHA precisa ter pelo menos ${SENHA_MIN} caracteres.`);
+if (TOKEN_REVISAO && TOKEN_REVISAO.length < 32) throw new Error('PAINEL_TOKEN_REVISAO precisa ter pelo menos 32 caracteres.');
 
 const scrypt = promisify(scryptCb);
 const resumo = (texto) => createHash('sha256').update(texto).digest();
@@ -58,7 +63,8 @@ function lerUsuarios() {
   }
 }
 
-// nome → { sal, hash, trocarSenha, criadoEm }. Sem protótipo: um nome como "constructor" não vira outra coisa.
+// nome → { sal, hash, trocarSenha, criadoEm, status, pedido, decisao }. Sem status = ativo (contas antigas).
+// Sem protótipo: um nome como "constructor" não vira outra coisa.
 const usuarios = Object.assign(Object.create(null), COM_LOGIN ? lerUsuarios() : {});
 
 function salvarUsuarios() {
@@ -69,6 +75,7 @@ function salvarUsuarios() {
 }
 
 const registroDe = (nome) => (nome === ADMIN ? REGISTRO_ADMIN : usuarios[nome]);
+const estaAtivo = (nome) => nome === ADMIN || (Boolean(usuarios[nome]) && (usuarios[nome].status || 'ativo') === 'ativo');
 
 // shortcut: sessões só na memória; reiniciar o painel pede login de novo a todos, ok para poucos usuários
 const SESSAO_MS = 12 * 60 * 60 * 1000;
@@ -86,7 +93,7 @@ function sessaoDe(req) {
   const token = /(?:^|;\s*)sessao=([\w-]+)/.exec(req.headers.cookie || '')?.[1];
   const s = token && sessoes.get(token);
   if (!s) return null;
-  if (s.expira < Date.now() || !registroDe(s.nome)) {
+  if (s.expira < Date.now() || !estaAtivo(s.nome)) {
     sessoes.delete(token);
     return null;
   }
@@ -170,6 +177,10 @@ async function entrar(req, res, ip) {
     throw erro(401, 'Usuário ou senha incorretos.');
   }
   falhas.delete(ip);
+  // A situação do pedido só é contada depois da senha certa: assim ninguém descobre quem pediu acesso.
+  const status = usuarios[nome]?.status;
+  if (status === 'pendente') throw erro(403, 'Seu pedido de acesso ainda está em análise. Tente de novo mais tarde.');
+  if (status === 'recusado') throw erro(403, 'Seu pedido de acesso foi recusado.');
   res.setHeader('Set-Cookie', cookieSessao(req, criarSessao(nome), SESSAO_MS / 1000));
   return responderJson(res, 200, { usuario: nome, admin: nome === ADMIN, trocarSenha: Boolean(usuarios[nome]?.trocarSenha) });
 }
@@ -190,17 +201,77 @@ async function trocarSenha(req, res, sessao, ip) {
   return responderJson(res, 200, { mensagem: 'Senha trocada.' });
 }
 
+// ---------------------------------------------------------------- pedidos de conta (cadastro pela própria pessoa)
+
+const MAX_PENDENTES = 100;
+const cadastrosPorIp = new Map(); // endereço → { n, desde }
+
+// Texto livre vindo de desconhecidos: sem caracteres de controle e com tamanho limitado.
+const textoLimpo = (valor, max) => String(valor ?? '').replace(/[\u0000-\u001f\u007f]+/g, ' ').trim().slice(0, max);
+
+async function cadastrar(req, res, ip) {
+  const agora = Date.now();
+  const c = cadastrosPorIp.get(ip);
+  if (c && agora - c.desde < 60 * 60 * 1000 && c.n >= 3) throw erro(429, 'Muitos pedidos deste endereço. Tente de novo daqui a uma hora.');
+  const dados = await lerJson(req);
+  const email = textoLimpo(dados.email, 64).toLowerCase();
+  const pedido = { nome: textoLimpo(dados.nome, 100), empresa: textoLimpo(dados.empresa, 100), motivo: textoLimpo(dados.motivo, 500) };
+  if (!EMAIL_VALIDO.test(email) || !NOME_VALIDO.test(email)) throw erro(400, 'Informe um e-mail válido (até 64 caracteres).');
+  if (pedido.nome.length < 2) throw erro(400, 'Informe seu nome.');
+  if (pedido.motivo.length < 10) throw erro(400, 'Conte em uma frase para que você vai usar a ferramenta.');
+  validarSenha(dados.senha);
+  const pendentes = Object.values(usuarios).filter((u) => u.status === 'pendente').length;
+  if (pendentes >= MAX_PENDENTES) throw erro(503, 'Há pedidos demais aguardando análise. Tente de novo mais tarde.');
+
+  if (c && agora - c.desde < 60 * 60 * 1000) c.n++;
+  else cadastrosPorIp.set(ip, { n: 1, desde: agora });
+  if (cadastrosPorIp.size > 10000) cadastrosPorIp.clear(); // shortcut: mesmo limite do bloqueio de senha
+
+  // E-mail já usado: responde igual e não muda nada, para o cadastro não revelar quem tem conta.
+  if (!registroDe(email)) {
+    const hash = await gerarHash(dados.senha);
+    usuarios[email] = { ...hash, status: 'pendente', trocarSenha: false, criadoEm: new Date().toISOString(), pedido };
+    salvarUsuarios();
+  }
+  return responderJson(res, 201, { mensagem: 'Pedido recebido. Você vai conseguir entrar assim que ele for aprovado.' });
+}
+
+function listarPedidos(res) {
+  const pedidos = Object.entries(usuarios)
+    .filter(([, u]) => u.status === 'pendente')
+    .map(([usuario, u]) => ({ usuario, criadoEm: u.criadoEm, ...u.pedido }))
+    .sort((a, b) => a.criadoEm.localeCompare(b.criadoEm));
+  return responderJson(res, 200, { pedidos });
+}
+
+async function decidirPedido(req, res, nome, acao, quem) {
+  const u = usuarios[nome];
+  if (!u || u.status !== 'pendente') throw erro(409, 'Esse pedido não está mais aguardando análise.');
+  const { observacao } = await lerJson(req);
+  u.status = acao === 'aprovar' ? 'ativo' : 'recusado';
+  u.decisao = { acao, por: quem, em: new Date().toISOString(), observacao: textoLimpo(observacao, 300) };
+  salvarUsuarios();
+  return responderJson(res, 200, { usuario: nome, status: u.status });
+}
+
 async function rotasDeUsuarios(req, res, caminho) {
   if (caminho === '/api/usuarios' && req.method === 'GET') {
     const lista = Object.entries(usuarios)
-      .map(([usuario, u]) => ({ usuario, criadoEm: u.criadoEm, trocarSenha: Boolean(u.trocarSenha) }))
+      .map(([usuario, u]) => ({
+        usuario,
+        criadoEm: u.criadoEm,
+        trocarSenha: Boolean(u.trocarSenha),
+        status: u.status || 'ativo',
+        pedido: u.pedido || null,
+        decisao: u.decisao || null,
+      }))
       .sort((a, b) => a.usuario.localeCompare(b.usuario));
     return responderJson(res, 200, { admin: ADMIN, usuarios: lista });
   }
   if (caminho === '/api/usuarios' && req.method === 'POST') {
     const { usuario, senha } = await lerJson(req);
     const nome = String(usuario || '').trim().toLowerCase();
-    if (!NOME_VALIDO.test(nome)) throw erro(400, 'Usuário: use de 3 a 64 letras minúsculas, números, ponto, hífen ou @.');
+    if (!NOME_VALIDO.test(nome)) throw erro(400, `Usuário: ${REGRA_NOME}.`);
     if (registroDe(nome)) throw erro(409, `O usuário ${nome} já existe.`);
     validarSenha(senha);
     usuarios[nome] = { ...(await gerarHash(senha)), trocarSenha: true, criadoEm: new Date().toISOString() };
@@ -227,8 +298,15 @@ async function rotasDeUsuarios(req, res, caminho) {
   throw erro(405, 'Método não permitido.');
 }
 
-// Arquivos que a tela de login precisa antes de alguém entrar.
-const PUBLICOS = /^\/(login\.html|login\.js|styles\.css|fontes\/[\w.-]+)$/;
+// Arquivos que as telas de login e de cadastro precisam antes de alguém entrar.
+const PUBLICOS = /^\/(login\.html|login\.js|cadastro\.html|cadastro\.js|styles\.css|fontes\/[\w.-]+)$/;
+const RESUMO_TOKEN = TOKEN_REVISAO ? resumo(TOKEN_REVISAO) : null;
+
+// A revisão automática se identifica com "Authorization: Bearer <PAINEL_TOKEN_REVISAO>".
+function ehRevisor(req) {
+  const [tipo, valor] = (req.headers.authorization || '').split(' ');
+  return Boolean(RESUMO_TOKEN) && tipo === 'Bearer' && Boolean(valor) && timingSafeEqual(resumo(valor), RESUMO_TOKEN);
+}
 
 // Responde as rotas de conta e barra quem não entrou. Devolve a sessão quando a requisição pode seguir.
 async function controlarAcesso(req, res, caminho) {
@@ -239,7 +317,20 @@ async function controlarAcesso(req, res, caminho) {
   const ip = ipDe(req);
   if (caminho === '/api/acesso' && req.method === 'GET') return responderJson(res, 200, { email: EMAIL_ACESSO || null });
   if (caminho === '/api/entrar' && req.method === 'POST') return entrar(req, res, ip);
+  if (caminho === '/api/cadastro' && req.method === 'POST') return cadastrar(req, res, ip);
   if (PUBLICOS.test(caminho) && req.method === 'GET') return true;
+
+  const decisao = caminho.match(/^\/api\/usuarios\/([^/]+)\/(aprovar|recusar)$/);
+  if (req.headers.authorization) {
+    if (bloqueado(ip)) throw erro(429, 'Muitas tentativas erradas. Espere 15 minutos e tente de novo.');
+    if (!ehRevisor(req)) {
+      registrarFalha(ip, req.headers.authorization);
+      throw erro(401, 'Chave de revisão inválida.');
+    }
+    if (caminho === '/api/pedidos' && req.method === 'GET') return listarPedidos(res);
+    if (decisao && req.method === 'POST') return decidirPedido(req, res, decodeURIComponent(decisao[1]), decisao[2], 'revisão automática');
+    throw erro(403, 'A chave de revisão só lista pedidos e aprova ou recusa.');
+  }
 
   const sessao = sessaoDe(req);
   if (!sessao) {
@@ -263,8 +354,10 @@ async function controlarAcesso(req, res, caminho) {
   if (sessao.trocarSenha && (caminho.startsWith('/api/') || caminho.startsWith('/svc/') || caminho === '/status')) {
     throw erro(403, 'Troque a senha provisória antes de continuar.');
   }
-  if (caminho === '/api/usuarios' || caminho.startsWith('/api/usuarios/')) {
-    if (!sessao.admin) throw erro(403, 'Só o administrador cadastra usuários.');
+  if (caminho === '/api/pedidos' || caminho === '/api/usuarios' || caminho.startsWith('/api/usuarios/')) {
+    if (!sessao.admin) throw erro(403, 'Só o administrador cuida dos usuários.');
+    if (caminho === '/api/pedidos' && req.method === 'GET') return listarPedidos(res);
+    if (decisao && req.method === 'POST') return decidirPedido(req, res, decodeURIComponent(decisao[1]), decisao[2], sessao.nome);
     return rotasDeUsuarios(req, res, caminho);
   }
   if (caminho.startsWith('/api/')) throw erro(404, 'Não encontrado.');

@@ -16,7 +16,9 @@ Painel web + linha de comando que usam os três serviços de código aberto da R
   - O administrador é a conta do `.env`; as rotas `/api/usuarios` são só dele.
   - Senha provisória obriga a trocar em `/api/senha` antes de qualquer consulta.
   - Bloqueio por IP depois de 10 senhas erradas diferentes. O IP vem do último item do `X-Forwarded-For`, e o IPv6 conta pelo bloco /64.
-  - Públicos: `login.html`, `login.js`, `styles.css`, `fontes/`, `/api/acesso` e `/api/entrar`.
+  - Cadastro pela própria pessoa em `/api/cadastro`: a conta nasce com `status: pendente`. E-mail repetido responde igual, sem revelar nada. Limite de 3 pedidos por hora por IP e de 100 pedidos pendentes.
+  - `Authorization: Bearer PAINEL_TOKEN_REVISAO` só lista `/api/pedidos` e aprova ou recusa. Usado pela tarefa agendada `central-rtc-revisar-pedidos` do Claude Code.
+  - Públicos: `login.html`, `login.js`, `cadastro.html`, `cadastro.js`, `styles.css`, `fontes/`, `/api/acesso`, `/api/entrar` e `/api/cadastro`.
 - `painel/cli.js` — comandos `status`, `modelo`, `lote`, `danfse`. Códigos de saída: 0 ok, 1 uso/serviço fora, 2 algum item falhou.
 - `painel/public/lib/` — **código compartilhado entre navegador e Node** (ESM puro): `rtc.js` (cliente, montagem das operações, leitura dos resultados, lote), `csv.js`, `formato.js`, `zip.js`. Não use APIs exclusivas do Node aqui.
 - `painel/public/app.js` + `index.html` + `styles.css` — interface, JS puro, sem build.

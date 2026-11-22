@@ -1,4 +1,4 @@
-// Tela de login: entra e volta para o painel. Mostra o link "Pedir acesso" quando o servidor tem um e-mail configurado.
+// Tela de login: entra e volta para o painel. Mostra o contato do administrador quando o servidor tem um e-mail configurado.
 
 const form = document.querySelector('#form-entrar');
 const caixaErro = document.querySelector('#erro-entrar');
@@ -32,10 +32,7 @@ fetch('/api/acesso')
   .then((r) => r.json())
   .then(({ email }) => {
     if (!email) return;
-    const assunto = 'Pedido de acesso à Central RTC';
-    const corpo = 'Olá! Gostaria de ter acesso à Central RTC.\n\nNome:\nEmpresa:\nUsuário desejado:\n';
-    document.querySelector('#link-pedir-acesso').href =
-      `mailto:${email}?subject=${encodeURIComponent(assunto)}&body=${encodeURIComponent(corpo)}`;
+    document.querySelector('#link-pedir-acesso').href = `mailto:${email}?subject=${encodeURIComponent('Central RTC')}`;
     document.querySelector('#pedir-acesso').hidden = false;
   })
   .catch(() => {});

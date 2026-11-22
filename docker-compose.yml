@@ -48,6 +48,8 @@ services:
       PAINEL_SENHA: ${PAINEL_SENHA:-}
       # E-mail que aparece no botão "Pedir acesso" da tela de login.
       PAINEL_EMAIL_ACESSO: ${PAINEL_EMAIL_ACESSO:-}
+      # Chave da revisão automática de pedidos de conta (só lista pedidos e aprova/recusa).
+      PAINEL_TOKEN_REVISAO: ${PAINEL_TOKEN_REVISAO:-}
     volumes:
       - contas:/app/dados  # usuários cadastrados (só o hash das senhas)
     ports:
