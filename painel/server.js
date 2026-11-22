@@ -244,6 +244,9 @@ const COM_REDEFINIR = Boolean(SMTP_USUARIO && SMTP_SENHA && ENDERECO);
 const LINK_MS = 30 * 60 * 1000;
 const links = new Map(); // resumo do token → { nome, criadoEm, expira }; só na memória, como as sessões
 const esqueciPorIp = new Map(); // endereço → { n, desde }
+const DIA_MS = 24 * 60 * 60 * 1000;
+const MAX_ENVIOS_DIA = 3;
+const enviosPorConta = new Map(); // conta → horários dos e-mails de senha nova das últimas 24 horas
 
 // Cliente SMTP mínimo: TLS direto e AUTH PLAIN. O corpo vai em base64, então acentos e linhas com "." não quebram a mensagem.
 function enviarEmail(para, assunto, texto) {
@@ -284,17 +287,27 @@ async function esqueci(req, res, ip) {
   if (esqueciPorIp.size > 10000) esqueciPorIp.clear(); // shortcut: mesmo limite do bloqueio de senha
 
   for (const [t, l] of links) if (l.expira < agora) links.delete(t);
-  // Um e-mail por conta a cada 2 minutos: ninguém usa o painel para encher a caixa de outra pessoa.
-  const recente = [...links.values()].some((l) => l.nome === nome && agora - l.criadoEm < 2 * 60 * 1000);
-  if (nome !== ADMIN && EMAIL_VALIDO.test(nome) && estaAtivo(nome) && !recente) {
-    for (const [t, l] of links) if (l.nome === nome) links.delete(t); // só o link mais novo vale
+  for (const [n, envios] of enviosPorConta) {
+    const doDia = envios.filter((e) => agora - e < DIA_MS);
+    if (doDia.length) enviosPorConta.set(n, doDia);
+    else enviosPorConta.delete(n);
+  }
+  // Contra encher a caixa de alguém: enquanto o link enviado vale, não sai outro, e cada conta recebe no máximo 3 por dia.
+  const linkValendo = [...links.values()].some((l) => l.nome === nome);
+  const envios = enviosPorConta.get(nome) || [];
+  if (nome !== ADMIN && EMAIL_VALIDO.test(nome) && estaAtivo(nome) && !linkValendo && envios.length < MAX_ENVIOS_DIA) {
     const token = randomBytes(32).toString('base64url');
-    links.set(resumo(token).toString('hex'), { nome, criadoEm: agora, expira: agora + LINK_MS });
+    const chave = resumo(token).toString('hex');
+    links.set(chave, { nome, criadoEm: agora, expira: agora + LINK_MS });
+    enviosPorConta.set(nome, [...envios, agora]);
     const texto = `Alguém pediu uma senha nova para a sua conta na Central RTC.\n\nPara criar a senha nova, abra este link em até 30 minutos:\n${ENDERECO}/senha.html#${token}\n\nSe não foi você, ignore este e-mail: a sua senha continua a mesma.\n`;
     // Sem await: a resposta sai no mesmo tempo com ou sem conta, e não revela quem tem conta.
-    enviarEmail(nome, 'Central RTC: crie uma senha nova', texto).catch((e) => console.error(`E-mail de senha nova não saiu: ${e.message}`));
+    enviarEmail(nome, 'Central RTC: crie uma senha nova', texto).catch((e) => {
+      links.delete(chave); // o e-mail não saiu: a pessoa pode pedir de novo sem esperar o link vencer
+      console.error(`E-mail de senha nova não saiu: ${e.message}`);
+    });
   }
-  return responderJson(res, 200, { mensagem: 'Se esse e-mail tiver uma conta ativa, enviamos um link para criar uma senha nova. Ele vale por 30 minutos. Confira também a caixa de spam.' });
+  return responderJson(res, 200, { mensagem: 'Se esse e-mail tiver uma conta ativa, enviamos um link para criar uma senha nova. Ele vale por 30 minutos; enquanto valer, não mandamos outro. Confira também a caixa de spam.' });
 }
 
 async function redefinirSenha(req, res) {

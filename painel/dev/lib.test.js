@@ -423,10 +423,13 @@ test('Painel: senha esquecida com link por e-mail', async (t) => {
   assert.equal((await esqueci('eva@x.com', '10.0.4.3')).status, 200);
   await new Promise((ok) => setTimeout(ok, 300));
   assert.equal(recebidas.length, 1);
-  const corpo = Buffer.from(recebidas[0].split('\r\n\r\n')[1].replace(/\r\n\.\r\n$/, ''), 'base64').toString('utf8');
+  const tokenDo = (n) => {
+    const corpo = Buffer.from(recebidas[n].split('\r\n\r\n')[1].replace(/\r\n\.\r\n$/, ''), 'base64').toString('utf8');
+    return /https:\/\/painel\.exemplo\/senha\.html#([\w-]+)/.exec(corpo)?.[1];
+  };
   assert.match(recebidas[0], /^To: <eva@x\.com>/m);
-  const token = /https:\/\/painel\.exemplo\/senha\.html#([\w-]+)/.exec(corpo)?.[1];
-  assert.ok(token, corpo);
+  const token = tokenDo(0);
+  assert.ok(token);
 
   const sessaoVelha = (await entrar('eva@x.com', 'qualquer', '10.0.4.9')).sessao;
   assert.equal(sessaoVelha, undefined); // ela não sabe a senha antiga
@@ -438,6 +441,21 @@ test('Painel: senha esquecida com link por e-mail', async (t) => {
   assert.equal((await entrar('eva@x.com', 'senha-nova-da-eva!', '10.0.4.9')).status, 200);
   // O link só vale uma vez.
   assert.equal((await redefinir(token, 'outra-senha-da-eva!')).status, 400);
+
+  // Link usado libera um novo pedido; enquanto o novo vale, não sai outro; no máximo 3 e-mails por conta no dia.
+  assert.equal((await esqueci('eva@x.com', '10.0.4.4')).status, 200);
+  await esperar(2);
+  assert.equal(recebidas.length, 2);
+  await esqueci('eva@x.com', '10.0.4.4');
+  await new Promise((ok) => setTimeout(ok, 300));
+  assert.equal(recebidas.length, 2);
+  assert.equal((await redefinir(tokenDo(1), 'senha-nova-da-eva-2!')).status, 200);
+  await esqueci('eva@x.com', '10.0.4.5');
+  await esperar(3);
+  assert.equal((await redefinir(tokenDo(2), 'senha-nova-da-eva-3!')).status, 200);
+  await esqueci('eva@x.com', '10.0.4.5');
+  await new Promise((ok) => setTimeout(ok, 300));
+  assert.equal(recebidas.length, 3);
 
   // No máximo 5 pedidos por hora do mesmo endereço.
   for (let i = 0; i < 5; i++) await esqueci(`x${i}@x.com`, '10.0.4.7');
