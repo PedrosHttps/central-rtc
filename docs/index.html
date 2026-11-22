@@ -3,10 +3,10 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Central RTC — calculadoras da reforma tributária e DANFSe num painel só, online</title>
-  <meta name="description" content="Disponível online. Painel e linha de comando de código aberto que junta as calculadoras de CBS, IBS e Imposto Seletivo da Receita Federal (regime geral e Simples Nacional) e o gerador de DANFSe.">
+  <title>Central RTC — a reforma tributária calculada com os serviços oficiais da Receita</title>
+  <meta name="description" content="Disponível online e grátis. Painel de código aberto que junta as calculadoras de CBS, IBS e Imposto Seletivo da Receita Federal (regime geral e Simples Nacional) e o gerador de DANFSe, com processamento em lote.">
   <meta property="og:title" content="Central RTC">
-  <meta property="og:description" content="As calculadoras da reforma tributária e o gerador de DANFSe da Receita Federal num painel só, com processamento em lote.">
+  <meta property="og:description" content="As calculadoras da reforma tributária e o gerador de DANFSe da Receita Federal num painel só, online, com processamento em lote.">
   <meta property="og:image" content="img/simples-resultado.png">
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect x='3' y='3' width='26' height='26' rx='3' fill='none' stroke='%235A2D82' stroke-width='3'/%3E%3Cpath d='M9 12h14M9 17h14M9 22h8' stroke='%2315253A' stroke-width='2.5'/%3E%3C/svg%3E">
   <link rel="stylesheet" href="estilo.css">
@@ -16,10 +16,10 @@
     <div class="moldura">
       <a class="marca" href="#">Central RTC</a>
       <nav aria-label="Navegação">
-        <a href="#usar-online">Usar online</a>
-        <a href="guia.html">Guia de uso</a>
-        <a class="opcional" href="#o-que-faz">O que faz</a>
-        <a class="opcional" href="#instalar">Instalar</a>
+        <a class="opcional" href="#por-que">Por que existe</a>
+        <a class="opcional" href="#recursos">Recursos</a>
+        <a class="opcional" href="#seguranca">Segurança</a>
+        <a href="guia.html">Guia</a>
         <a href="https://github.com/PedrosHttps/central-rtc">GitHub</a>
       </nav>
     </div>
@@ -29,13 +29,12 @@
     <div class="abertura">
       <div class="moldura">
         <div>
-          <span class="carimbo">Disponível online</span>
-          <h1>As calculadoras da reforma tributária num painel só</h1>
-          <p class="lead">CBS, IBS e Imposto Seletivo do regime geral e do Simples Nacional, mais o gerador de DANFSe, usando os serviços oficiais da Receita Federal. Use direto no navegador, do computador ou do celular, sem instalar nada. Um item por vez ou uma planilha inteira.</p>
+          <span class="carimbo">Disponível online · grátis</span>
+          <h1>A reforma tributária, calculada pelos serviços oficiais</h1>
+          <p class="lead">A Central RTC junta as calculadoras de CBS, IBS e Imposto Seletivo da Receita Federal e o gerador de DANFSe num painel só. Funciona no navegador, do computador ou do celular, para um item ou para uma planilha inteira.</p>
           <div class="acoes">
-            <a class="botao botao-principal" href="https://central-rtc.taild4c7a5.ts.net">Usar online</a>
-            <a class="botao" href="guia.html">Guia de uso</a>
-            <a class="botao" href="#instalar">Instalar no seu computador</a>
+            <a class="botao botao-principal" href="https://central-rtc.taild4c7a5.ts.net">Criar conta e usar</a>
+            <a class="botao" href="guia.html">Ver o guia de uso</a>
           </div>
         </div>
         <div class="vitrine">
@@ -45,23 +44,72 @@
       </div>
     </div>
 
-    <section id="usar-online">
+    <div class="numeros">
       <div class="moldura">
-        <h2>Use online</h2>
-        <p class="intro">A Central RTC está no ar em <a href="https://central-rtc.taild4c7a5.ts.net"><strong>central-rtc.taild4c7a5.ts.net</strong></a>. Funciona no navegador do computador e do celular. É aberta a todos: basta criar uma conta. Uma checagem automática contra robôs e spam libera a conta em 1 a 2 minutos.</p>
-        <ol class="passos">
-          <li><p><strong>Abra o endereço</strong> e toque em <em>Criar conta</em>.</p></li>
-          <li><p><strong>Informe nome e e-mail</strong> e escolha uma senha. O nome da empresa é opcional.</p></li>
-          <li><p><strong>Entre em 1 a 2 minutos,</strong> com o e-mail e a senha que você escolheu.</p></li>
-        </ol>
-        <p class="nota">Nunca mexeu com tributos? O <a href="guia.html">guia de uso</a> explica cada tela e cada termo em linguagem simples. O acesso online roda num servidor do próprio projeto e pode ficar fora do ar de vez em quando. Se precisar dele o tempo todo, instale no seu computador.</p>
+        <dl>
+          <div><dt>3</dt><dd>serviços oficiais da Receita num painel só</dd></div>
+          <div><dt>Centenas</dt><dd>de itens de uma vez, por planilha</dd></div>
+          <div><dt>1 a 2 min</dt><dd>para a conta ser liberada</dd></div>
+          <div><dt>Nada</dt><dd>para instalar no seu computador</dd></div>
+        </dl>
+      </div>
+    </div>
+
+    <section id="por-que">
+      <div class="moldura">
+        <span class="sobretitulo">O problema</span>
+        <h2>As calculadoras oficiais existem, mas não são feitas para pessoas</h2>
+        <p class="intro">Para a transição da reforma, a Receita Federal publicou as calculadoras como programas de código aberto. Elas são a referência dos cálculos, mas chegam como serviços para sistemas conversarem entre si, não como telas.</p>
+        <div class="comparacao">
+          <div class="lado">
+            <h3>Usando direto</h3>
+            <ul>
+              <li>Instalar Java e Go e compilar três programas.</li>
+              <li>Montar cada pedido em JSON, com os códigos certos.</li>
+              <li>Ler respostas técnicas e procurar o significado de cada erro.</li>
+              <li>Um item por vez, e um XML por vez para o DANFSe.</li>
+            </ul>
+          </div>
+          <div class="lado lado-solucao">
+            <h3>Com a Central RTC</h3>
+            <ul>
+              <li>Abrir um endereço e entrar com e-mail e senha.</li>
+              <li>Preencher um formulário, com os códigos explicados ao lado.</li>
+              <li>Ver o resultado organizado, com cada erro em português.</li>
+              <li>Mandar uma planilha ou uma pasta de XMLs e baixar tudo pronto.</li>
+            </ul>
+          </div>
+        </div>
       </div>
     </section>
 
-    <section id="o-que-faz">
+    <section id="para-quem">
       <div class="moldura">
+        <span class="sobretitulo">Para quem é</span>
+        <h2>Feita para quem vai conviver com a CBS e o IBS</h2>
+        <div class="publico">
+          <article>
+            <h3>Contadores e escritórios</h3>
+            <p>Simule a tributação nova dos clientes, confira notas e processe a carteira inteira por planilha.</p>
+          </article>
+          <article>
+            <h3>Empresas e quem emite nota</h3>
+            <p>Veja quanto de CBS e IBS cada produto ou serviço vai ter, e gere o DANFSe das NFS-e já emitidas.</p>
+          </article>
+          <article>
+            <h3>Desenvolvedores e equipes de ERP</h3>
+            <p>Teste regras e códigos antes de mexer no sistema e automatize lotes pela linha de comando.</p>
+          </article>
+        </div>
+        <p class="nota">Nunca mexeu com tributos? O <a href="guia.html">guia de uso</a> explica cada tela e cada termo em linguagem simples.</p>
+      </div>
+    </section>
+
+    <section id="recursos">
+      <div class="moldura">
+        <span class="sobretitulo">Recursos</span>
         <h2>O que você faz com ela</h2>
-        <p class="intro">Cada parte conversa com um serviço oficial. A Central RTC monta as requisições, chama a calculadora certa e organiza a resposta. Nenhum valor é recalculado por fora.</p>
+        <p class="intro">Cada parte conversa com um serviço oficial. A Central RTC monta os pedidos, chama a calculadora certa e organiza a resposta. Nenhum valor é recalculado por fora.</p>
         <div class="ficha">
           <div class="campo"><span class="rotulo">Simples Nacional</span><strong>IBS e CBS item a item</strong><p>Conforme a NT 2026.005, com o estado de cada item e os códigos de erro explicados.</p></div>
           <div class="campo"><span class="rotulo">Atividades e anexos</span><strong>Qual cAtivSN usar</strong><p>As 15 atividades vigentes, marcadas como disponíveis ou não para os anexos e o documento da empresa.</p></div>
@@ -75,8 +123,9 @@
 
     <section id="telas">
       <div class="moldura">
-        <h2>Como é por dentro</h2>
-        <p class="intro nota">As capturas abaixo foram feitas com o simulador de desenvolvimento do projeto, então os valores são fictícios.</p>
+        <span class="sobretitulo">Por dentro</span>
+        <h2>Como é usar</h2>
+        <p class="intro nota">As capturas foram feitas com o simulador de desenvolvimento do projeto, então os valores são fictícios.</p>
         <div class="galeria">
           <div class="peca">
             <div class="texto">
@@ -111,49 +160,84 @@
       </div>
     </section>
 
-    <section id="instalar">
+    <section id="reforma">
       <div class="moldura">
-        <h2>Instalar no seu computador</h2>
-        <p class="intro">Não é preciso instalar nada para <a href="#usar-online">usar online</a>. Instalar só faz sentido se você quiser a ferramenta inteira na sua máquina. Para isso, você precisa do Docker Desktop (Windows e macOS) ou do Docker com Compose (Linux). Ele baixa o código oficial da Receita, compila e gera o banco de dados.</p>
-        <ol class="passos">
-          <li>
-            <p>Baixe o projeto.</p>
-            <pre>git clone https://github.com/PedrosHttps/central-rtc.git
-cd central-rtc</pre>
-          </li>
-          <li>
-            <p>Suba os quatro contêineres. A primeira vez leva alguns minutos.</p>
-            <pre>docker compose up -d --build</pre>
-          </li>
-          <li>
-            <p>Abra <code>http://localhost:3000</code>. As bolinhas no topo ficam verdes quando cada serviço responde.</p>
-          </li>
+        <span class="sobretitulo">Por que agora</span>
+        <h2>A transição já começou</h2>
+        <p class="intro">A CBS e o IBS substituem aos poucos PIS, Cofins, IPI, ICMS e ISS. Cada fase muda o que aparece na nota e quanto se paga.</p>
+        <ol class="linha-tempo">
+          <li><strong>2026</strong><p>Ano de teste: CBS de 0,9% e IBS de 0,1% destacados na nota.</p></li>
+          <li><strong>2027</strong><p>A CBS substitui PIS e Cofins, e o Imposto Seletivo começa.</p></li>
+          <li><strong>2029 a 2032</strong><p>ICMS e ISS caem a cada ano, enquanto o IBS sobe.</p></li>
+          <li><strong>2033</strong><p>Ficam só IBS, CBS e Imposto Seletivo.</p></li>
         </ol>
+        <p class="nota">Alíquotas e regras ainda podem mudar por regulamentação. A Central RTC usa a versão em vigor dos serviços da Receita.</p>
       </div>
     </section>
 
-    <section id="automatizar">
+    <section id="seguranca">
       <div class="moldura">
-        <h2>Automatize pela linha de comando</h2>
-        <p class="intro">O mesmo motor do painel roda sem navegador. Dá para agendar no cron ou no Agendador de Tarefas do Windows.</p>
-        <pre><span class="c"># os três serviços estão no ar?</span>
-node cli.js status
+        <span class="sobretitulo">Segurança e privacidade</span>
+        <h2>Seus dados fiscais não ficam guardados</h2>
+        <p class="intro">O painel calcula e devolve. Planilhas, XMLs e resultados não são gravados. A única coisa salva é a sua conta.</p>
+        <ul class="garantias">
+          <li><strong>Conexão criptografada</strong><p>Todo o acesso online passa por HTTPS.</p></li>
+          <li><strong>Senha embaralhada</strong><p>A senha é guardada só como hash scrypt. Nem o administrador consegue lê-la.</p></li>
+          <li><strong>Contra robôs</strong><p>Cada conta nova passa por uma checagem automática antes de ser liberada.</p></li>
+          <li><strong>Contra adivinhação</strong><p>Depois de 10 senhas erradas, o endereço fica bloqueado por 15 minutos.</p></li>
+          <li><strong>Código aberto</strong><p>Tudo o que roda está no GitHub, sob licença MIT, para qualquer um conferir.</p></li>
+          <li><strong>Testado a cada mudança</strong><p>Testes automáticos cobrem login, cadastro, bloqueio e cálculos antes de cada atualização.</p></li>
+        </ul>
+      </div>
+    </section>
 
-<span class="c"># uma planilha de itens do Simples vira planilha de resultados</span>
-node cli.js lote simples notas-novembro.csv
+    <section id="comecar">
+      <div class="moldura">
+        <span class="sobretitulo">Comece</span>
+        <h2>Três jeitos de usar</h2>
+        <div class="caminhos">
+          <article class="caminho caminho-principal">
+            <span class="rotulo">Recomendado</span>
+            <h3>Online</h3>
+            <ol class="passos">
+              <li><p>Abra <a href="https://central-rtc.taild4c7a5.ts.net">central-rtc.taild4c7a5.ts.net</a> e toque em <em>Criar conta</em>.</p></li>
+              <li><p>Informe nome, e-mail e uma senha.</p></li>
+              <li><p>Em 1 a 2 minutos, entre e use.</p></li>
+            </ol>
+            <a class="botao botao-principal" href="https://central-rtc.taild4c7a5.ts.net">Criar conta</a>
+            <p class="nota">Roda num servidor do próprio projeto e pode ficar fora do ar de vez em quando.</p>
+          </article>
+          <article class="caminho">
+            <span class="rotulo">Na sua máquina</span>
+            <h3>Instalar</h3>
+            <p>Com o Docker instalado, a ferramenta inteira sobe no seu computador e fica em <code>localhost:3000</code>.</p>
+            <pre>git clone https://github.com/PedrosHttps/central-rtc.git
+cd central-rtc
+docker compose up -d --build</pre>
+            <p class="nota">A primeira vez leva alguns minutos: o Docker baixa e compila o código oficial da Receita.</p>
+          </article>
+          <article class="caminho">
+            <span class="rotulo">Sem navegador</span>
+            <h3>Automatizar</h3>
+            <p>O mesmo motor do painel roda pela linha de comando, para agendar no cron ou no Agendador de Tarefas.</p>
+            <pre><span class="c"># planilha de itens vira planilha de resultados</span>
+node cli.js lote simples notas.csv
 
-<span class="c"># uma pasta de NFS-e vira uma pasta de PDFs</span>
+<span class="c"># pasta de NFS-e vira pasta de PDFs</span>
 node cli.js danfse ./xmls -o ./pdfs</pre>
-        <p class="nota">Sai com código 0 quando tudo deu certo, 1 quando um serviço está fora e 2 quando algum item ou nota falhou.</p>
+            <p class="nota">Código de saída 0 quando tudo deu certo, 1 quando um serviço está fora e 2 quando algum item falhou.</p>
+          </article>
+        </div>
       </div>
     </section>
 
     <section id="pecas">
       <div class="moldura">
+        <span class="sobretitulo">Tecnologia</span>
         <h2>Como as peças se conectam</h2>
-        <p class="intro">O painel e a linha de comando falam com três serviços independentes, cada um vindo do repositório oficial da Receita Federal.</p>
+        <p class="intro">O painel e a linha de comando falam com três serviços independentes, cada um compilado a partir do repositório oficial da Receita Federal.</p>
         <div class="mapa">
-          <div class="caixa"><span class="rotulo">porta 3000</span><strong>Painel e CLI</strong><br><span class="nota">Node.js, sem dependências</span></div>
+          <div class="caixa"><span class="rotulo">porta 3000</span><strong>Painel e CLI</strong><br><span class="nota">Node.js, sem dependências externas</span></div>
           <div class="seta" aria-hidden="true">⟶</div>
           <div class="servicos">
             <div class="caixa"><span class="rotulo">porta 8080, Java 25</span><strong><a href="https://github.com/ReceitaFederal/calculadora-rtc-regime-regular">Calculadora do regime geral</a></strong></div>
@@ -169,8 +253,19 @@ node cli.js danfse ./xmls -o ./pdfs</pre>
         <h2>Antes de usar</h2>
         <div class="avisos">
           <div class="aviso"><h3>Não é um produto da Receita</h3><p>É um projeto independente que usa os serviços de código aberto publicados por ela.</p></div>
-          <div class="aviso"><h3>Confira os resultados</h3><p>As regras da reforma ainda mudam. Atualize os serviços com frequência e revise os valores antes de emitir documentos.</p></div>
+          <div class="aviso"><h3>Valores estimados</h3><p>As regras da reforma ainda mudam. Confirme com seu contador antes de usar os resultados em notas, preços ou declarações.</p></div>
           <div class="aviso"><h3>DANFSe só de nota autorizada</h3><p>O DANFSe é o documento auxiliar de uma NFS-e já emitida. Use os XMLs que o emissor devolveu.</p></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="chamada">
+      <div class="moldura">
+        <h2>Comece agora, em 2 minutos</h2>
+        <p>Crie a conta, espere a liberação e faça o primeiro cálculo.</p>
+        <div class="acoes">
+          <a class="botao botao-principal" href="https://central-rtc.taild4c7a5.ts.net">Criar conta e usar</a>
+          <a class="botao" href="guia.html">Ver o guia de uso</a>
         </div>
       </div>
     </section>

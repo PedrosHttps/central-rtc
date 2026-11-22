@@ -121,6 +121,68 @@ pre .c { color: #9fb0c2; }
 .seta { font: 600 1.75rem var(--legenda); color: var(--carimbo); }
 @media (max-width: 44rem) { .mapa { grid-template-columns: minmax(0, 1fr); } .seta { transform: rotate(90deg); justify-self: center; } }
 
+/* apresentação do projeto */
+.sobretitulo { display: block; font: 700 0.875rem/1 var(--legenda); letter-spacing: 0.08em; text-transform: uppercase; color: var(--carimbo); margin-bottom: 0.6rem; }
+section h2 { max-width: 26ch; }
+
+.numeros { background: var(--tinta); color: #fff; padding: clamp(1.5rem, 4vw, 2.25rem) 0; }
+.numeros dl { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 1.5rem; margin: 0; }
+.numeros dt { font: 700 clamp(1.75rem, 3.6vw, 2.5rem)/1 var(--legenda); letter-spacing: -0.01em; margin-bottom: 0.35rem; }
+.numeros dd { margin: 0; color: #c9d3dd; font-size: 0.9375rem; line-height: 1.4; }
+@media (max-width: 48rem) { .numeros dl { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+
+.comparacao { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; max-width: 60rem; }
+.lado { background: var(--folha); border: 1.5px solid var(--linha); border-radius: 4px; padding: 1.25rem 1.4rem; }
+.lado ul { margin: 0; padding-left: 1.2rem; color: var(--grafite); }
+.lado li { margin: 0.35rem 0; }
+.lado-solucao { border-color: var(--carimbo); box-shadow: 0.5rem 0.5rem 0 var(--carimbo-claro); }
+.lado-solucao h3 { color: var(--carimbo); }
+.lado-solucao ul { color: var(--tinta); }
+@media (max-width: 44rem) { .comparacao { grid-template-columns: minmax(0, 1fr); } }
+
+.publico { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1rem; margin: 1.5rem 0 1.25rem; }
+.publico article { border-top: 3px solid var(--carimbo); background: var(--folha); padding: 1.1rem 1.25rem 1.25rem; border-radius: 0 0 4px 4px; }
+.publico p { margin: 0; color: var(--grafite); }
+@media (max-width: 52rem) { .publico { grid-template-columns: minmax(0, 1fr); } }
+
+.linha-tempo { list-style: none; margin: 0 0 1.25rem; padding: 0; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 0; border-top: 2px solid var(--tinta); }
+.linha-tempo li { position: relative; padding: 1.25rem 1.25rem 0 0; }
+.linha-tempo li::before { content: ""; position: absolute; top: -0.5rem; left: 0; width: 0.85rem; height: 0.85rem; border-radius: 50%; background: var(--papel); border: 2px solid var(--carimbo); }
+.linha-tempo li:first-child::before { background: var(--carimbo); }
+.linha-tempo strong { display: block; font: 700 1.375rem/1.1 var(--legenda); margin-bottom: 0.35rem; }
+.linha-tempo p { margin: 0; color: var(--grafite); font-size: 1rem; }
+@media (max-width: 48rem) {
+  .linha-tempo { grid-template-columns: minmax(0, 1fr); border-top: 0; border-left: 2px solid var(--tinta); padding-left: 1.25rem; gap: 1.25rem; }
+  .linha-tempo li { padding: 0; }
+  .linha-tempo li::before { top: 0.25rem; left: calc(-1.25rem - 0.55rem); }
+}
+
+.garantias { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1.5rem 2rem; }
+.garantias li { padding-left: 1.6rem; position: relative; }
+.garantias li::before { content: "✓"; position: absolute; left: 0; top: 0; font: 700 1.125rem/1.3 var(--legenda); color: var(--ok); }
+.garantias strong { display: block; font: 600 1.1875rem/1.3 var(--legenda); }
+.garantias p { margin: 0.2rem 0 0; color: var(--grafite); font-size: 1rem; }
+@media (max-width: 56rem) { .garantias { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 38rem) { .garantias { grid-template-columns: minmax(0, 1fr); } }
+
+.caminhos { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1rem; align-items: start; }
+.caminho { background: var(--folha); border: 1.5px solid var(--tinta); border-radius: 4px; padding: 1.25rem 1.4rem 1.4rem; display: grid; gap: 0.75rem; min-width: 0; }
+.caminho > * { margin: 0; }
+.caminho .rotulo { font: 600 0.875rem var(--legenda); color: var(--grafite); }
+.caminho-principal { border-color: var(--carimbo); box-shadow: 0.5rem 0.5rem 0 var(--carimbo-claro); }
+.caminho-principal .rotulo { color: var(--carimbo); }
+.caminho .passos { gap: 0.6rem; }
+.caminho .passos li { grid-template-columns: 1.6rem minmax(0, 1fr); }
+.caminho .passos li::before { font-size: 1.25rem; }
+.caminho .botao { justify-self: start; }
+.caminho pre { margin: 0; font-size: 0.8125rem; white-space: pre-wrap; overflow-wrap: anywhere; }
+@media (max-width: 60rem) { .caminhos { grid-template-columns: minmax(0, 1fr); } }
+
+.chamada { background: var(--carimbo-claro); text-align: center; }
+.chamada h2 { margin-left: auto; margin-right: auto; }
+.chamada p { color: var(--grafite); margin: 0 0 1.5rem; }
+.chamada .acoes { justify-content: center; }
+
 .avisos { display: grid; gap: 1rem; grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr)); }
 .aviso { border-left: 3px solid var(--carimbo); padding: 0.2rem 0 0.2rem 1rem; }
 .aviso p { margin: 0; color: var(--grafite); font-size: 1rem; }
