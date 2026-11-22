@@ -185,7 +185,7 @@ test('Painel: login, cadastro de usuários e troca da senha provisória', async 
   assert.match(inicio.headers.get('content-security-policy'), /frame-ancestors 'none'/);
 
   // Arquivos vão comprimidos e, se o navegador já tem a versão atual, nada é baixado de novo.
-  const tela = await pedir('/login.html');
+  const tela = await fetch('http://127.0.0.1:39517/login.html', { headers: { 'accept-encoding': 'br' } });
   assert.equal(tela.headers.get('content-encoding'), 'br');
   assert.match(await tela.text(), /<form id="form-entrar"/);
   const repetida = await fetch(`http://127.0.0.1:39517/login.html`, { headers: { 'if-none-match': tela.headers.get('etag') } });
