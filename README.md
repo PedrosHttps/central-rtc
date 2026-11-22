@@ -139,7 +139,7 @@ No Windows, use o Agendador de Tarefas com o programa `node` e os argumentos `cl
 
 Com o login ligado, há dois caminhos para alguém ganhar acesso:
 
-- **A pessoa pede sozinha:** em **Criar conta**, na tela de login, ela informa nome, e-mail (que vira o usuário), empresa, motivo e a senha que escolher. A conta nasce **em análise** e só funciona depois de aprovada. O mesmo endereço de internet só consegue fazer 3 pedidos por hora, e o painel aceita no máximo 100 pedidos aguardando análise.
+- **A pessoa pede sozinha:** em **Criar conta**, na tela de login, ela informa nome, e-mail (que vira o usuário), empresa (opcional) e a senha que escolher. A ferramenta é aberta a todos. A conta nasce **em análise** só para uma checagem contra robôs e spam, que o `vigia-pedidos.ps1` faz em 1 a 2 minutos. O mesmo endereço de internet só consegue fazer 3 pedidos por hora, e o painel aceita no máximo 100 pedidos aguardando análise.
 - **O administrador cadastra:** em **Usuários**, ele cria a conta com uma senha provisória. No primeiro acesso, o painel obriga a pessoa a trocar essa senha.
 
 Os pedidos são aprovados ou recusados pelo administrador, também em **Usuários**, ou por uma revisão automática que usa a chave `PAINEL_TOKEN_REVISAO`. Por exemplo, uma tarefa agendada do Claude Code que lê os pedidos e decide seguindo regras escritas. A tela mostra quem decidiu e por quê. Em **Usuários**, o administrador também gera uma senha provisória nova para quem esqueceu e remove o acesso de quem saiu. Quem é removido sai na hora.

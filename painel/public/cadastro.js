@@ -21,8 +21,7 @@ async function prepararGoogle() {
   if (nome && !form.nome.value) form.nome.value = nome;
   for (const campo of form.querySelectorAll('[data-senha]')) campo.remove();
   document.querySelector('#explica').textContent =
-    'Seu e-mail foi confirmado pelo Google. Conte para que vai usar a ferramenta: quando o pedido for aprovado, você entra pelo botão do Google.';
-  form.motivo.focus();
+    'Seu e-mail foi confirmado pelo Google. Confira o nome e toque em Pedir acesso: em 1 a 2 minutos você já entra pelo botão do Google.';
 }
 
 form.addEventListener('submit', async (ev) => {

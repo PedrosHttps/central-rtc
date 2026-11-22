@@ -265,7 +265,7 @@ test('Painel: a pessoa pede acesso sozinha e a revisão aprova ou recusa', async
       headers: { authorization: `Bearer ${chave}`, 'content-type': 'application/json', 'x-forwarded-for': '10.0.9.9' },
       body: metodo === 'POST' ? JSON.stringify({ observacao: 'pedido coerente' }) : undefined,
     });
-  const bia = { nome: 'Bia Souza', email: 'Bia@Empresa.com.br', empresa: 'Empresa', motivo: 'Calcular IBS e CBS das notas', senha: 'senha-da-bia-123' };
+  const bia = { nome: 'Bia Souza', email: 'Bia@Empresa.com.br', empresa: 'Empresa', senha: 'senha-da-bia-123' };
 
   assert.equal((await pedir('/cadastro.html')).status, 200);
   assert.equal((await pedirAcesso({ ...bia, email: 'sem-arroba' })).status, 400);
@@ -284,7 +284,7 @@ test('Painel: a pessoa pede acesso sozinha e a revisão aprova ou recusa', async
   // A chave de revisão lista pedidos e decide; não faz mais nada. Chave errada é recusada.
   assert.equal((await revisao('/api/pedidos', 'GET', 'chave-errada')).status, 401);
   const { pedidos } = await (await revisao('/api/pedidos')).json();
-  assert.deepEqual(pedidos.map((p) => [p.usuario, p.nome, p.motivo]), [['bia@empresa.com.br', 'Bia Souza', bia.motivo]]);
+  assert.deepEqual(pedidos.map((p) => [p.usuario, p.nome, p.empresa]), [['bia@empresa.com.br', 'Bia Souza', 'Empresa']]);
   assert.equal((await revisao('/api/usuarios')).status, 403);
   assert.equal((await revisao('/status')).status, 403);
   assert.equal((await revisao('/api/usuarios/bia%40empresa.com.br/aprovar', 'POST')).status, 200);
@@ -295,7 +295,7 @@ test('Painel: a pessoa pede acesso sozinha e a revisão aprova ou recusa', async
   assert.equal((await entrar('bia@empresa.com.br', 'senha-do-intruso-1')).status, 401);
 
   // Recusado não entra; o administrador vê quem decidiu.
-  assert.equal((await pedirAcesso({ ...bia, nome: 'Robô', email: 'spam@spam.com', motivo: 'compre já compre já' }, '10.0.1.2')).status, 201);
+  assert.equal((await pedirAcesso({ ...bia, nome: 'Robô', email: 'spam@spam.com' }, '10.0.1.2')).status, 201);
   assert.equal((await revisao('/api/usuarios/spam%40spam.com/recusar', 'POST')).status, 200);
   assert.match((await entrar('spam@spam.com', 'senha-da-bia-123')).dados.mensagem, /recusado/);
   const admin = await entrar('ana', 'senha-de-teste-123');
@@ -373,7 +373,7 @@ test('Painel: login com Google cai no cadastro, passa pela análise e depois ent
   const pedido = await fetch('http://127.0.0.1:39520/api/cadastro', {
     method: 'POST',
     headers: { 'content-type': 'application/json', cookie: `google_cadastro=${cadastroGoogle}`, 'x-forwarded-for': '10.0.2.1' },
-    body: JSON.stringify({ google: true, email: 'outra@pessoa.com', nome: 'Gabriela Lima', motivo: 'Conferir IBS e CBS das notas da loja' }),
+    body: JSON.stringify({ google: true, email: 'outra@pessoa.com', nome: 'Gabriela Lima' }),
   });
   assert.equal(pedido.status, 201);
   const { pedidos } = await (await fetch('http://127.0.0.1:39520/api/pedidos', { headers: { authorization: `Bearer ${CHAVE_REVISAO}` } })).json();

@@ -192,7 +192,7 @@ async function entrar(req, res, ip) {
   falhas.delete(ip);
   // A situação do pedido só é contada depois da senha certa: assim ninguém descobre quem pediu acesso.
   const status = usuarios[nome]?.status;
-  if (status === 'pendente') throw erro(403, 'Seu pedido de acesso ainda está em análise. Tente de novo mais tarde.');
+  if (status === 'pendente') throw erro(403, 'Sua conta ainda está em análise. Normalmente leva 1 a 2 minutos.');
   if (status === 'recusado') throw erro(403, 'Seu pedido de acesso foi recusado.');
   res.setHeader('Set-Cookie', cookieSessao(req, criarSessao(nome), SESSAO_MS / 1000));
   return responderJson(res, 200, { usuario: nome, admin: nome === ADMIN, trocarSenha: Boolean(usuarios[nome]?.trocarSenha) });
@@ -230,10 +230,9 @@ async function cadastrar(req, res, ip) {
   const google = dados.google ? identidadesGoogle.get(tokenGoogle) : null;
   if (dados.google && !(google?.expira > Date.now())) throw erro(400, 'Entre com o Google de novo para continuar o cadastro.');
   const email = google ? google.email : textoLimpo(dados.email, 64).toLowerCase();
-  const pedido = { nome: textoLimpo(dados.nome, 100), empresa: textoLimpo(dados.empresa, 100), motivo: textoLimpo(dados.motivo, 500) };
+  const pedido = { nome: textoLimpo(dados.nome, 100), empresa: textoLimpo(dados.empresa, 100) };
   if (!EMAIL_VALIDO.test(email) || !NOME_VALIDO.test(email)) throw erro(400, 'Informe um e-mail válido (até 64 caracteres).');
   if (pedido.nome.length < 2) throw erro(400, 'Informe seu nome.');
-  if (pedido.motivo.length < 10) throw erro(400, 'Conte em uma frase para que você vai usar a ferramenta.');
   if (!google) validarSenha(dados.senha);
 
   // Conferir e contar sem nenhum await no meio: pedidos simultâneos não passam juntos pelo limite.
@@ -262,7 +261,7 @@ async function cadastrar(req, res, ip) {
     };
     salvarUsuarios();
   }
-  return responderJson(res, 201, { mensagem: 'Pedido recebido. Você vai conseguir entrar assim que ele for aprovado.' });
+  return responderJson(res, 201, { mensagem: 'Conta criada. Em 1 a 2 minutos ela é liberada e você já pode entrar.' });
 }
 
 function listarPedidos(res) {

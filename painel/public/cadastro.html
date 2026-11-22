@@ -19,7 +19,7 @@
 
     <form id="form-cadastro" novalidate>
       <h1>Criar conta</h1>
-      <p id="explica" class="nota">Seu pedido passa por uma análise. Quando for aprovado, você entra com o e-mail e a senha que escolher aqui.</p>
+      <p id="explica" class="nota">Sua conta é liberada em 1 a 2 minutos, depois de uma checagem automática contra robôs. Aí é só entrar com o e-mail e a senha que escolher aqui.</p>
       <div class="ficha">
         <label class="campo campo-largo"><span>Nome</span>
           <input name="nome" autocomplete="name" maxlength="100" required>
@@ -27,11 +27,8 @@
         <label class="campo campo-largo"><span>E-mail (vira o seu usuário)</span>
           <input name="email" type="email" autocomplete="username" inputmode="email" autocapitalize="none" autocorrect="off" spellcheck="false" maxlength="64" required>
         </label>
-        <label class="campo campo-largo"><span>Empresa</span>
+        <label class="campo campo-largo"><span>Empresa (opcional)</span>
           <input name="empresa" autocomplete="organization" maxlength="100">
-        </label>
-        <label class="campo campo-largo"><span>Para que você vai usar a ferramenta?</span>
-          <input name="motivo" autocomplete="off" maxlength="500" required>
         </label>
         <label class="campo campo-largo" data-senha><span>Senha (12 caracteres ou mais)</span>
           <input name="senha" type="password" autocomplete="new-password" required>

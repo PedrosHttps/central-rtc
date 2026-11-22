@@ -10,7 +10,7 @@ function mostrarErro(texto) {
 
 // Avisos de quem voltou do login com Google.
 const AVISOS = {
-  pendente: 'Seu pedido de acesso ainda está em análise. Tente de novo mais tarde.',
+  pendente: 'Sua conta ainda está em análise. Normalmente leva 1 a 2 minutos.',
   recusado: 'Seu pedido de acesso foi recusado.',
   'google-cancelado': 'O login com Google foi cancelado ou expirou. Tente de novo.',
   'google-erro': 'Não foi possível confirmar sua conta Google. Tente de novo.',

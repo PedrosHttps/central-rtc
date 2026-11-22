@@ -1102,7 +1102,6 @@ function dialogoUsuarios() {
       aguardando.map((u) => h('div', { class: 'pedido' },
         h('strong', { text: `${u.pedido?.nome || '—'} · ${u.usuario}` }),
         h('p', { text: [u.pedido?.empresa, `pediu em ${dataBR(u.criadoEm)}`, u.pedido?.emailConfirmado ? 'e-mail confirmado pelo Google' : 'e-mail não confirmado'].filter(Boolean).join(' · ') }),
-        h('p', { class: 'pedido-motivo', text: u.pedido?.motivo || '' }),
         h('div', { class: 'acoes-linha' },
           botao('Aprovar', () => decidir(u.usuario, 'aprovar')),
           botao('Recusar', () => decidir(u.usuario, 'recusar')),
