@@ -189,7 +189,7 @@ Use `node cli.js modelo <tipo>` ou o botão **Baixar planilha modelo** para come
 
 - **Regime geral, a partir de 2027:** as alíquotas nominais são obrigatórias em cada item, e o resultado sai como *cálculo simulado*. Antes de 2027 elas são proibidas, e a calculadora usa as alíquotas de referência de 2026. O painel esconde ou mostra os campos conforme a data.
 - **Simples Nacional:** item sem `cAtivSN` (ou com atividade fora de vigência ou não admitida no documento) não é calculado, sem erro. As alíquotas efetivas (`pIBSSN`, `pCBSSN`) vêm da apuração da empresa.
-- **DANFSe:** é o documento auxiliar de uma NFS-e já autorizada. Use os XMLs que o emissor devolveu.
+- **DANFSe:** é o documento auxiliar de uma NFS-e já autorizada. Use os XMLs que o emissor devolveu. Para testar ou demonstrar, há uma nota fictícia em `painel/exemplos/nfse-exemplo.xml` (sai com a faixa "sem validade jurídica").
 
 ## Desenvolvimento
 

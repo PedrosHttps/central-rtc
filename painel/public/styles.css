@@ -413,7 +413,6 @@ dl.chaves dd { overflow-wrap: anywhere; }
 
 .rodape { max-width: 78rem; margin: 0 auto; padding: 1.25rem clamp(1rem, 3vw, 2rem) 2.5rem; font-size: 0.875rem; color: var(--grafite); border-top: 1px solid var(--linha); }
 .rodape p { margin: 0 0 0.4rem; }
-.entrada-rodape { width: min(100%, 28rem); font-size: 0.8125rem; color: var(--grafite); margin: 1rem 0 0; }
 
 /* ------------------------------------------------------------------ monitor do administrador */
 

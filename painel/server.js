@@ -242,7 +242,7 @@ const SMTP_SENHA = process.env.SMTP_SENHA || '';
 const ENDERECO = (process.env.PAINEL_ENDERECO || '').replace(/\/+$/, '');
 const COM_REDEFINIR = Boolean(SMTP_USUARIO && SMTP_SENHA && ENDERECO);
 const LINK_MS = 30 * 60 * 1000;
-const links = new Map(); // resumo do token → { nome, criadoEm, expira }; só na memória, como as sessões
+const links = new Map(); // resumo do token → { nome, expira }; só na memória, como as sessões
 const esqueciPorIp = new Map(); // endereço → { n, desde }
 const DIA_MS = 24 * 60 * 60 * 1000;
 const MAX_ENVIOS_DIA = 3;
@@ -293,7 +293,7 @@ async function esqueci(req, res, ip) {
   if (nome !== ADMIN && EMAIL_VALIDO.test(nome) && estaAtivo(nome) && !linkValendo && envios.length < MAX_ENVIOS_DIA) {
     const token = randomBytes(32).toString('base64url');
     const chave = resumo(token).toString('hex');
-    links.set(chave, { nome, criadoEm: agora, expira: agora + LINK_MS });
+    links.set(chave, { nome, expira: agora + LINK_MS });
     enviosPorConta.set(nome, [...envios, agora]);
     const texto = `Alguém pediu uma senha nova para a sua conta na Central RTC.\n\nPara criar a senha nova, abra este link em até 30 minutos:\n${ENDERECO}/senha.html#${token}\n\nSe não foi você, ignore este e-mail: a sua senha continua a mesma.\n`;
     // Sem await: a resposta sai no mesmo tempo com ou sem conta, e não revela quem tem conta.
