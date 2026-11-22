@@ -18,7 +18,12 @@ Painel web + linha de comando que usam os três serviços de código aberto da R
   - Bloqueio por IP depois de 10 senhas erradas diferentes. O IP vem do último item do `X-Forwarded-For`, e o IPv6 conta pelo bloco /64.
   - Cadastro pela própria pessoa em `/api/cadastro`: a conta nasce com `status: pendente`. E-mail repetido responde igual, sem revelar nada. Limite de 3 pedidos por hora por IP e de 100 pedidos pendentes.
   - `Authorization: Bearer PAINEL_TOKEN_REVISAO` só lista `/api/pedidos` e aprova ou recusa. Usado pela tarefa agendada `central-rtc-revisar-pedidos` do Claude Code.
-  - Públicos: `login.html`, `login.js`, `cadastro.html`, `cadastro.js`, `styles.css`, `fontes/`, `/api/acesso`, `/api/entrar` e `/api/cadastro`.
+  - Google (opcional, `GOOGLE_CLIENT_ID` + `GOOGLE_CLIENT_SECRET` + `PAINEL_URL`), em `/api/google/entrar` → `/api/google/retorno`:
+    - Fluxo de código com PKCE; o `state.verificador` vai num cookie `SameSite=Lax`.
+    - Sem conta: o `google_cadastro` leva a `cadastro.html?google=1`. O pedido é gravado sem hash (conta só do Google, que nunca entra por senha) e com `pedido.emailConfirmado`.
+    - A volta usa uma página com `meta refresh` em vez de 302, para o cookie `SameSite=Strict` da sessão valer.
+    - Os testes trocam `GOOGLE_TOKEN_URL` por um servidor falso.
+  - Públicos: `login.html`, `login.js`, `cadastro.html`, `cadastro.js`, `styles.css`, `fontes/`, `/api/acesso`, `/api/entrar`, `/api/cadastro` e `/api/google/*`.
 - `painel/cli.js` — comandos `status`, `modelo`, `lote`, `danfse`. Códigos de saída: 0 ok, 1 uso/serviço fora, 2 algum item falhou.
 - `painel/public/lib/` — **código compartilhado entre navegador e Node** (ESM puro): `rtc.js` (cliente, montagem das operações, leitura dos resultados, lote), `csv.js`, `formato.js`, `zip.js`. Não use APIs exclusivas do Node aqui.
 - `painel/public/app.js` + `index.html` + `styles.css` — interface, JS puro, sem build.

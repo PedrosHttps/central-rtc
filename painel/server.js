@@ -37,6 +37,14 @@ if (ADMIN && !NOME_VALIDO.test(ADMIN)) throw new Error(`PAINEL_USUARIO: ${REGRA_
 if (SENHA_ADMIN && SENHA_ADMIN.length < SENHA_MIN) throw new Error(`PAINEL_SENHA precisa ter pelo menos ${SENHA_MIN} caracteres.`);
 if (TOKEN_REVISAO && TOKEN_REVISAO.length < 32) throw new Error('PAINEL_TOKEN_REVISAO precisa ter pelo menos 32 caracteres.');
 
+// Login com Google (opcional): precisa do app criado no Google Cloud e do endereço público do painel.
+const GOOGLE_ID = process.env.GOOGLE_CLIENT_ID || '';
+const GOOGLE_SEGREDO = process.env.GOOGLE_CLIENT_SECRET || '';
+const URL_PUBLICA = (process.env.PAINEL_URL || '').replace(/\/$/, '');
+const COM_GOOGLE = COM_LOGIN && Boolean(GOOGLE_ID && GOOGLE_SEGREDO);
+if (COM_GOOGLE && !/^https:\/\//.test(URL_PUBLICA)) throw new Error('Para o login com Google defina PAINEL_URL com o endereço https do painel.');
+const GOOGLE_TOKEN_URL = process.env.GOOGLE_TOKEN_URL || 'https://oauth2.googleapis.com/token'; // trocado só nos testes
+
 const scrypt = promisify(scryptCb);
 const resumo = (texto) => createHash('sha256').update(texto).digest();
 
@@ -89,25 +97,29 @@ function criarSessao(nome) {
   return token;
 }
 
+const lerCookie = (req, nome) => new RegExp(`(?:^|;\\s*)${nome}=([\\w.-]+)`).exec(req.headers.cookie || '')?.[1];
+
 function sessaoDe(req) {
-  const token = /(?:^|;\s*)sessao=([\w-]+)/.exec(req.headers.cookie || '')?.[1];
+  const token = lerCookie(req, 'sessao');
   const s = token && sessoes.get(token);
   if (!s) return null;
   if (s.expira < Date.now() || !estaAtivo(s.nome)) {
     sessoes.delete(token);
     return null;
   }
-  return { token, nome: s.nome, admin: s.nome === ADMIN, trocarSenha: Boolean(usuarios[s.nome]?.trocarSenha) };
+  const u = usuarios[s.nome];
+  return { token, nome: s.nome, admin: s.nome === ADMIN, trocarSenha: Boolean(u?.trocarSenha), soGoogle: Boolean(u && !u.hash) };
 }
 
 function encerrarSessoesDe(nome, exceto) {
   for (const [t, s] of sessoes) if (s.nome === nome && t !== exceto) sessoes.delete(t);
 }
 
+// Secure só fora do localhost: no acesso local o painel é http e o navegador recusaria o cookie.
+const seguro = (req) => (/^(localhost|127\.0\.0\.1|\[::1\])(:\d+)?$/.test(req.headers.host || '') ? '' : '; Secure');
+
 function cookieSessao(req, token, segundos) {
-  // Secure só fora do localhost: no acesso local o painel é http e o navegador recusaria o cookie.
-  const local = /^(localhost|127\.0\.0\.1|\[::1\])(:\d+)?$/.test(req.headers.host || '');
-  return `sessao=${token}; Path=/; HttpOnly; SameSite=Strict; Max-Age=${segundos}${local ? '' : '; Secure'}`;
+  return `sessao=${token}; Path=/; HttpOnly; SameSite=Strict; Max-Age=${segundos}${seguro(req)}`;
 }
 
 // ---------------------------------------------------------------- bloqueio de quem erra a senha
@@ -171,8 +183,9 @@ async function entrar(req, res, ip) {
   const { usuario, senha } = await lerJson(req);
   const nome = String(usuario || '').trim().toLowerCase();
   const registro = registroDe(nome);
-  const confere = await senhaConfere(String(senha || ''), registro || REGISTRO_FALSO);
-  if (!registro || !confere) {
+  // Conta só do Google não tem senha: passa pelo scrypt falso e nunca confere.
+  const confere = await senhaConfere(String(senha || ''), registro?.hash ? registro : REGISTRO_FALSO);
+  if (!registro?.hash || !confere) {
     registrarFalha(ip, `${nome}:${senha}`);
     throw erro(401, 'Usuário ou senha incorretos.');
   }
@@ -187,6 +200,7 @@ async function entrar(req, res, ip) {
 
 async function trocarSenha(req, res, sessao, ip) {
   if (sessao.admin) throw erro(400, 'A senha do administrador fica no arquivo .env do servidor.');
+  if (sessao.soGoogle) throw erro(400, 'Sua conta entra pelo Google e não tem senha para trocar.');
   if (bloqueado(ip)) throw erro(429, 'Muitas senhas erradas. Espere 15 minutos e tente de novo.');
   const { atual, nova } = await lerJson(req);
   if (!(await senhaConfere(String(atual || ''), usuarios[sessao.nome]))) {
@@ -211,12 +225,16 @@ const textoLimpo = (valor, max) => String(valor ?? '').replace(/[\u0000-\u001f\u
 
 async function cadastrar(req, res, ip) {
   const dados = await lerJson(req);
-  const email = textoLimpo(dados.email, 64).toLowerCase();
+  // Quem voltou do Google cadastra o e-mail que o Google confirmou, sem senha.
+  const tokenGoogle = lerCookie(req, 'google_cadastro');
+  const google = dados.google ? identidadesGoogle.get(tokenGoogle) : null;
+  if (dados.google && !(google?.expira > Date.now())) throw erro(400, 'Entre com o Google de novo para continuar o cadastro.');
+  const email = google ? google.email : textoLimpo(dados.email, 64).toLowerCase();
   const pedido = { nome: textoLimpo(dados.nome, 100), empresa: textoLimpo(dados.empresa, 100), motivo: textoLimpo(dados.motivo, 500) };
   if (!EMAIL_VALIDO.test(email) || !NOME_VALIDO.test(email)) throw erro(400, 'Informe um e-mail válido (até 64 caracteres).');
   if (pedido.nome.length < 2) throw erro(400, 'Informe seu nome.');
   if (pedido.motivo.length < 10) throw erro(400, 'Conte em uma frase para que você vai usar a ferramenta.');
-  validarSenha(dados.senha);
+  if (!google) validarSenha(dados.senha);
 
   // Conferir e contar sem nenhum await no meio: pedidos simultâneos não passam juntos pelo limite.
   const agora = Date.now();
@@ -230,10 +248,18 @@ async function cadastrar(req, res, ip) {
   if (cadastrosPorIp.size > 10000) cadastrosPorIp.clear(); // shortcut: mesmo limite do bloqueio de senha
 
   // O hash é feito sempre, exista ou não o e-mail: assim o tempo de resposta não revela quem tem conta.
-  const hash = await gerarHash(dados.senha);
+  // (No Google não há senha, e o e-mail já é comprovadamente da própria pessoa.)
+  const hash = google ? {} : await gerarHash(dados.senha);
+  if (google) identidadesGoogle.delete(tokenGoogle);
   // E-mail já usado: responde igual e não muda nada. Checado depois do await, então o primeiro pedido vence.
   if (!registroDe(email) && Object.values(usuarios).filter((u) => u.status === 'pendente').length < MAX_PENDENTES) {
-    usuarios[email] = { ...hash, status: 'pendente', trocarSenha: false, criadoEm: new Date().toISOString(), pedido };
+    usuarios[email] = {
+      ...hash,
+      status: 'pendente',
+      trocarSenha: false,
+      criadoEm: new Date().toISOString(),
+      pedido: { ...pedido, emailConfirmado: Boolean(google) },
+    };
     salvarUsuarios();
   }
   return responderJson(res, 201, { mensagem: 'Pedido recebido. Você vai conseguir entrar assim que ele for aprovado.' });
@@ -301,6 +327,100 @@ async function rotasDeUsuarios(req, res, caminho) {
   throw erro(405, 'Método não permitido.');
 }
 
+// ---------------------------------------------------------------- login com Google (OpenID Connect, sem bibliotecas)
+
+const RETORNO_GOOGLE = `${URL_PUBLICA}/api/google/retorno`;
+const DEZ_MINUTOS = 10 * 60 * 1000;
+// Quem voltou do Google e ainda não tem conta: token do cookie → { email, nome, expira }.
+// Só entra aqui quem passou pelo Google com sucesso, então não cresce com acessos anônimos.
+const identidadesGoogle = new Map();
+
+// Página mínima que leva a outro endereço. Um redirecionamento comum, vindo do Google, não levaria o
+// cookie de sessão (SameSite=Strict); a navegação feita pela própria página leva.
+function irPara(res, destino, cookies = []) {
+  res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store', 'Set-Cookie': cookies });
+  res.end(`<!doctype html><meta charset="utf-8"><meta http-equiv="refresh" content="0;url=${destino}"><title>Central RTC</title><p>Entrando…</p>`);
+}
+
+function googleEntrar(req, res) {
+  const estado = randomBytes(24).toString('base64url');
+  const verificador = randomBytes(32).toString('base64url'); // PKCE: só quem iniciou o login consegue trocar o código
+  const url = new URL('https://accounts.google.com/o/oauth2/v2/auth');
+  url.search = new URLSearchParams({
+    client_id: GOOGLE_ID,
+    redirect_uri: RETORNO_GOOGLE,
+    response_type: 'code',
+    scope: 'openid email profile',
+    state: estado,
+    code_challenge: createHash('sha256').update(verificador).digest('base64url'),
+    code_challenge_method: 'S256',
+    prompt: 'select_account',
+  });
+  // Lax: o cookie precisa voltar junto quando o Google manda o navegador de volta ao painel.
+  res.writeHead(302, {
+    Location: url.href,
+    'Cache-Control': 'no-store',
+    'Set-Cookie': `google_ida=${estado}.${verificador}; Path=/api/google; HttpOnly; SameSite=Lax; Max-Age=600${seguro(req)}`,
+  });
+  res.end();
+}
+
+async function googleRetorno(req, res, url) {
+  const limpa = `google_ida=; Path=/api/google; HttpOnly; SameSite=Lax; Max-Age=0${seguro(req)}`;
+  const aviso = (codigo) => irPara(res, `/login.html?aviso=${codigo}`, [limpa]);
+  const [estado, verificador] = (lerCookie(req, 'google_ida') || '').split('.');
+  const codigo = url.searchParams.get('code');
+  // O state confere com o cookie: impede que alguém faça você entrar na conta dele.
+  if (!estado || !verificador || !codigo || url.searchParams.get('state') !== estado) return aviso('google-cancelado');
+
+  let idToken;
+  try {
+    const r = await fetch(GOOGLE_TOKEN_URL, {
+      method: 'POST',
+      headers: { 'content-type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({
+        code: codigo, client_id: GOOGLE_ID, client_secret: GOOGLE_SEGREDO,
+        redirect_uri: RETORNO_GOOGLE, grant_type: 'authorization_code', code_verifier: verificador,
+      }),
+      signal: AbortSignal.timeout(10000),
+    });
+    idToken = r.ok ? (await r.json()).id_token : null;
+  } catch {
+    idToken = null;
+  }
+  // O id_token veio direto do Google, por HTTPS e com o nosso segredo: nesse caso o OpenID Connect
+  // dispensa conferir a assinatura. Os campos ainda são conferidos.
+  let id;
+  try {
+    id = JSON.parse(Buffer.from(String(idToken).split('.')[1], 'base64url').toString('utf8'));
+  } catch {
+    return aviso('google-erro');
+  }
+  const valido = ['accounts.google.com', 'https://accounts.google.com'].includes(id.iss) && id.aud === GOOGLE_ID
+    && id.exp * 1000 > Date.now() && id.email_verified === true && typeof id.email === 'string';
+  if (!valido) return aviso('google-erro');
+
+  const email = id.email.toLowerCase();
+  const conta = usuarios[email];
+  if (conta?.status === 'pendente') return aviso('pendente');
+  if (conta?.status === 'recusado') return aviso('recusado');
+  if (conta) return irPara(res, '/', [limpa, cookieSessao(req, criarSessao(email), SESSAO_MS / 1000)]);
+  if (!NOME_VALIDO.test(email)) return aviso('google-email');
+
+  // Ainda sem conta: segue para o cadastro com o e-mail confirmado pelo Google.
+  const agora = Date.now();
+  for (const [t, v] of identidadesGoogle) if (v.expira < agora) identidadesGoogle.delete(t);
+  const token = randomBytes(24).toString('base64url');
+  identidadesGoogle.set(token, { email, nome: textoLimpo(id.name, 100), expira: agora + DEZ_MINUTOS });
+  return irPara(res, '/cadastro.html?google=1', [limpa, `google_cadastro=${token}; Path=/api; HttpOnly; SameSite=Lax; Max-Age=600${seguro(req)}`]);
+}
+
+function googleIdentidade(req, res) {
+  const g = identidadesGoogle.get(lerCookie(req, 'google_cadastro'));
+  if (!(g?.expira > Date.now())) throw erro(404, 'Entre com o Google de novo para continuar o cadastro.');
+  return responderJson(res, 200, { email: g.email, nome: g.nome });
+}
+
 // Arquivos que as telas de login e de cadastro precisam antes de alguém entrar.
 const PUBLICOS = /^\/(login\.html|login\.js|cadastro\.html|cadastro\.js|styles\.css|fontes\/[\w.-]+)$/;
 const RESUMO_TOKEN = TOKEN_REVISAO ? resumo(TOKEN_REVISAO) : null;
@@ -318,7 +438,12 @@ async function controlarAcesso(req, res, caminho) {
     return caminho.startsWith('/api/') ? responderJson(res, 404, { mensagem: 'Não encontrado.' }) : true;
   }
   const ip = ipDe(req);
-  if (caminho === '/api/acesso' && req.method === 'GET') return responderJson(res, 200, { email: EMAIL_ACESSO || null });
+  if (caminho === '/api/acesso' && req.method === 'GET') return responderJson(res, 200, { email: EMAIL_ACESSO || null, google: COM_GOOGLE });
+  if (COM_GOOGLE && req.method === 'GET') {
+    if (caminho === '/api/google/entrar') return googleEntrar(req, res);
+    if (caminho === '/api/google/retorno') return googleRetorno(req, res, new URL(req.url, 'http://local'));
+    if (caminho === '/api/google/identidade') return googleIdentidade(req, res);
+  }
   if (caminho === '/api/entrar' && req.method === 'POST') return entrar(req, res, ip);
   if (caminho === '/api/cadastro' && req.method === 'POST') return cadastrar(req, res, ip);
   if (PUBLICOS.test(caminho) && req.method === 'GET') return true;
@@ -350,7 +475,7 @@ async function controlarAcesso(req, res, caminho) {
     return responderJson(res, 200, { mensagem: 'Até logo.' });
   }
   if (caminho === '/api/eu' && req.method === 'GET') {
-    return responderJson(res, 200, { usuario: sessao.nome, admin: sessao.admin, trocarSenha: sessao.trocarSenha });
+    return responderJson(res, 200, { usuario: sessao.nome, admin: sessao.admin, trocarSenha: sessao.trocarSenha, google: sessao.soGoogle });
   }
   if (caminho === '/api/senha' && req.method === 'POST') return trocarSenha(req, res, sessao, ip);
   // Com senha provisória só dá para carregar a interface e trocar a senha.

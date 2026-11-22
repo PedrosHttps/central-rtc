@@ -1,7 +1,23 @@
-// Tela de login: entra e volta para o painel. Mostra o contato do administrador quando o servidor tem um e-mail configurado.
+// Tela de login: entra e volta para o painel. Mostra o botão do Google e o contato do administrador quando o servidor tem.
 
 const form = document.querySelector('#form-entrar');
 const caixaErro = document.querySelector('#erro-entrar');
+
+function mostrarErro(texto) {
+  caixaErro.textContent = texto;
+  caixaErro.hidden = false;
+}
+
+// Avisos de quem voltou do login com Google.
+const AVISOS = {
+  pendente: 'Seu pedido de acesso ainda está em análise. Tente de novo mais tarde.',
+  recusado: 'Seu pedido de acesso foi recusado.',
+  'google-cancelado': 'O login com Google foi cancelado ou expirou. Tente de novo.',
+  'google-erro': 'Não foi possível confirmar sua conta Google. Tente de novo.',
+  'google-email': 'Esse e-mail do Google não pode ser usado como usuário. Use o cadastro com senha.',
+};
+const aviso = AVISOS[new URLSearchParams(location.search).get('aviso')];
+if (aviso) mostrarErro(aviso);
 
 form.addEventListener('submit', async (ev) => {
   ev.preventDefault();
@@ -17,12 +33,10 @@ form.addEventListener('submit', async (ev) => {
     });
     if (r.ok) return location.assign('/');
     const { mensagem } = await r.json().catch(() => ({}));
-    caixaErro.textContent = mensagem || 'Não foi possível entrar agora. Tente de novo.';
-    caixaErro.hidden = false;
+    mostrarErro(mensagem || 'Não foi possível entrar agora. Tente de novo.');
     form.senha.select();
   } catch {
-    caixaErro.textContent = 'O painel não respondeu. Confira sua conexão e tente de novo.';
-    caixaErro.hidden = false;
+    mostrarErro('O painel não respondeu. Confira sua conexão e tente de novo.');
   } finally {
     botao.disabled = false;
   }
@@ -30,11 +44,13 @@ form.addEventListener('submit', async (ev) => {
 
 fetch('/api/acesso')
   .then((r) => r.json())
-  .then(({ email }) => {
+  .then(({ email, google }) => {
+    document.querySelector('#entrar-google').hidden = !google;
     if (!email) return;
     document.querySelector('#link-pedir-acesso').href = `mailto:${email}?subject=${encodeURIComponent('Central RTC')}`;
     document.querySelector('#pedir-acesso').hidden = false;
   })
   .catch(() => {});
 
-form.usuario.focus();
+// No celular, focar abriria o teclado por cima da tela antes de a pessoa escolher o que fazer.
+if (matchMedia("(pointer: fine)").matches) form.usuario.focus();

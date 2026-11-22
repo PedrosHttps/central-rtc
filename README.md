@@ -130,6 +130,7 @@ No Windows, use o Agendador de Tarefas com o programa `node` e os argumentos `cl
 | `PAINEL_EMAIL_ACESSO` | vazia | E-mail de contato mostrado na tela de login. Vazia, o contato não aparece. |
 | `PAINEL_TOKEN_REVISAO` | vazia | Chave (32 caracteres ou mais) da revisão automática de pedidos. Com `Authorization: Bearer <chave>` só dá para `GET /api/pedidos` e `POST /api/usuarios/<e-mail>/aprovar` ou `recusar`. |
 | `PAINEL_DADOS` | `painel/dados` | Pasta do `usuarios.json`, com as contas cadastradas (só o hash das senhas). No Docker fica no volume `contas`. |
+| `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` e `PAINEL_URL` | vazias | Ligam o **Entrar com Google**. `PAINEL_URL` é o endereço `https` público do painel. Veja abaixo como criar o app no Google. |
 
 ### Contas de usuário
 
@@ -141,6 +142,17 @@ Com o login ligado, há dois caminhos para alguém ganhar acesso:
 Os pedidos são aprovados ou recusados pelo administrador, também em **Usuários**, ou por uma revisão automática que usa a chave `PAINEL_TOKEN_REVISAO`. Por exemplo, uma tarefa agendada do Claude Code que lê os pedidos e decide seguindo regras escritas. A tela mostra quem decidiu e por quê. Em **Usuários**, o administrador também gera uma senha provisória nova para quem esqueceu e remove o acesso de quem saiu. Quem é removido sai na hora.
 
 Depois de 10 senhas erradas em 15 minutos, o endereço de internet fica sem conseguir entrar por 15 minutos. As sessões duram 12 horas e só existem na memória: reiniciar o painel pede login de novo a todos.
+
+### Entrar com Google
+
+Com o login com Google ligado, quem entra pelo botão do Google sem ter conta cai em **Criar conta**. O nome e o e-mail já vêm preenchidos, e não é preciso escolher senha. O pedido passa pela mesma análise e aparece marcado como "e-mail confirmado pelo Google". Quem já tem conta com o mesmo e-mail entra direto.
+
+Para ligar:
+1. No [Google Cloud Console](https://console.cloud.google.com/), crie um projeto. Em **APIs e serviços → Tela de permissão OAuth**, escolha o tipo **Externo**, preencha nome e e-mail e publique o app (**Em produção**). Os escopos `openid`, `email` e `profile` não precisam de verificação do Google.
+2. Em **Credenciais → Criar credenciais → ID do cliente OAuth**, escolha **Aplicativo da Web**. Em **URIs de redirecionamento autorizados**, coloque `<PAINEL_URL>/api/google/retorno`.
+3. Copie o ID e a chave secreta para `GOOGLE_CLIENT_ID` e `GOOGLE_CLIENT_SECRET` no `.env`, defina `PAINEL_URL` e rode `docker compose up -d`.
+
+O painel usa o fluxo de código com PKCE e `state` amarrado a um cookie. O `id_token` vem direto do Google, e o painel confere emissor, destinatário, validade e se o e-mail foi confirmado. A chave secreta fica só no servidor.
 
 ## Planilhas do lote
 

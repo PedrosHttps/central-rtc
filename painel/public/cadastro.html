@@ -19,24 +19,24 @@
 
     <form id="form-cadastro" novalidate>
       <h1>Criar conta</h1>
-      <p class="nota">Seu pedido passa por uma análise. Quando for aprovado, você entra com o e-mail e a senha que escolher aqui.</p>
+      <p id="explica" class="nota">Seu pedido passa por uma análise. Quando for aprovado, você entra com o e-mail e a senha que escolher aqui.</p>
       <div class="ficha">
         <label class="campo campo-largo"><span>Nome</span>
           <input name="nome" autocomplete="name" maxlength="100" required>
         </label>
         <label class="campo campo-largo"><span>E-mail (vira o seu usuário)</span>
-          <input name="email" type="email" autocomplete="email" autocapitalize="none" spellcheck="false" maxlength="64" required>
+          <input name="email" type="email" autocomplete="username" inputmode="email" autocapitalize="none" autocorrect="off" spellcheck="false" maxlength="64" required>
         </label>
         <label class="campo campo-largo"><span>Empresa</span>
           <input name="empresa" autocomplete="organization" maxlength="100">
         </label>
         <label class="campo campo-largo"><span>Para que você vai usar a ferramenta?</span>
-          <input name="motivo" maxlength="500" required>
+          <input name="motivo" autocomplete="off" maxlength="500" required>
         </label>
-        <label class="campo campo-largo"><span>Senha (12 caracteres ou mais)</span>
+        <label class="campo campo-largo" data-senha><span>Senha (12 caracteres ou mais)</span>
           <input name="senha" type="password" autocomplete="new-password" required>
         </label>
-        <label class="campo campo-largo"><span>Repita a senha</span>
+        <label class="campo campo-largo" data-senha><span>Repita a senha</span>
           <input name="repetida" type="password" autocomplete="new-password" required>
         </label>
       </div>
@@ -45,6 +45,11 @@
         <button type="submit" class="botao botao-principal">Pedir acesso</button>
       </div>
     </form>
+
+    <div id="cadastro-google" hidden>
+      <p class="ou"><span>ou</span></p>
+      <a class="botao botao-google" href="/api/google/entrar">Criar conta com Google</a>
+    </div>
 
     <p class="nota">Já tem conta? <a href="login.html">Entrar</a>.</p>
   </main>

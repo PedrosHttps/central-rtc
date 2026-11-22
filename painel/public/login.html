@@ -20,8 +20,8 @@
     <form id="form-entrar" novalidate>
       <h1>Entrar</h1>
       <div class="ficha">
-        <label class="campo campo-largo"><span>Usuário</span>
-          <input name="usuario" autocomplete="username" autocapitalize="none" spellcheck="false" required>
+        <label class="campo campo-largo"><span>E-mail ou usuário</span>
+          <input name="usuario" autocomplete="username" inputmode="email" autocapitalize="none" autocorrect="off" spellcheck="false" required>
         </label>
         <label class="campo campo-largo"><span>Senha</span>
           <input name="senha" type="password" autocomplete="current-password" required>
@@ -32,6 +32,11 @@
         <button type="submit" class="botao botao-principal">Entrar</button>
       </div>
     </form>
+
+    <div id="entrar-google" hidden>
+      <p class="ou"><span>ou</span></p>
+      <a class="botao botao-google" href="/api/google/entrar">Entrar com Google</a>
+    </div>
 
     <p class="nota">Ainda não tem conta? <a href="cadastro.html">Criar conta</a>. O acesso é liberado depois de uma análise do pedido.</p>
     <p id="pedir-acesso" class="nota" hidden>Dúvidas? <a id="link-pedir-acesso" href="#">Escreva para o administrador</a>.</p>
