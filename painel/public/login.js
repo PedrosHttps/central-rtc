@@ -1,5 +1,7 @@
 // Tela de login: entra e volta para o painel. Mostra o contato do administrador quando o servidor tem.
 
+import './mostrar-senha.js';
+
 const form = document.querySelector('#form-entrar');
 const caixaErro = document.querySelector('#erro-entrar');
 

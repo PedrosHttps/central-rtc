@@ -474,7 +474,7 @@ async function rotasDeUsuarios(req, res, caminho) {
 }
 
 // Arquivos que as telas de login e de cadastro precisam antes de alguém entrar.
-const PUBLICOS = /^\/(login\.html|login\.js|cadastro\.html|cadastro\.js|senha\.html|senha\.js|styles\.css|fontes\/[\w.-]+)$/;
+const PUBLICOS = /^\/(login\.html|login\.js|cadastro\.html|cadastro\.js|senha\.html|senha\.js|mostrar-senha\.js|styles\.css|fontes\/[\w.-]+)$/;
 const RESUMO_TOKEN = TOKEN_REVISAO ? resumo(TOKEN_REVISAO) : null;
 
 // A revisão automática se identifica com "Authorization: Bearer <PAINEL_TOKEN_REVISAO>".

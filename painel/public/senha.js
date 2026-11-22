@@ -1,5 +1,7 @@
 // Senha esquecida: sem link, pede o e-mail; com o link do e-mail (#token), cria a senha nova.
 
+import './mostrar-senha.js';
+
 const token = location.hash.slice(1);
 const form = document.querySelector(token ? '#form-nova' : '#form-pedir');
 const caixa = form.querySelector('.mensagem');

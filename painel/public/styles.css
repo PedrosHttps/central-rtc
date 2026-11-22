@@ -469,7 +469,9 @@ dl.chaves dd { overflow-wrap: anywhere; }
 .entrada h1 { font-size: 1.75rem; margin-bottom: 1rem; }
 .entrada .acoes { margin-bottom: 1rem; }
 .entrada a.botao { text-decoration: none; text-align: center; }
-.entrada-esqueci { display: block; width: fit-content; margin: 0.5rem 0 0 auto; font-size: 0.875rem; }
+.opcoes-senha { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 0.25rem 1rem; margin-top: 0.6rem; font-size: 0.9375rem; }
+.mostrar-senha { display: inline-flex; align-items: center; gap: 0.45rem; cursor: pointer; color: var(--grafite); }
+.mostrar-senha input { width: 1.05rem; height: 1.05rem; accent-color: var(--carimbo); margin: 0; }
 .entrada-links { display: flex; flex-wrap: wrap; gap: 0.25rem 1.25rem; margin-top: 0.5rem; padding-top: 0.9rem; border-top: 1px solid var(--linha); font-size: 0.875rem; }
 
 .conta { display: flex; flex-wrap: wrap; align-items: center; gap: 0.25rem 0.5rem; font-size: 0.9375rem; }

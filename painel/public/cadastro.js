@@ -1,5 +1,7 @@
 // Tela de cadastro: a própria pessoa pede acesso; a conta só funciona depois de aprovada.
 
+import './mostrar-senha.js';
+
 const form = document.querySelector('#form-cadastro');
 const caixa = document.querySelector('#msg-cadastro');
 

@@ -1,3 +1,4 @@
+import './mostrar-senha.js';
 import {
   criarCliente, operacaoSimples, operacaoRegimeGeral, itensSimples, itensRegimeGeral, ESTADOS_ITEM, UFS, DOCUMENTOS,
   MODELOS, prepararLote, executarLote, linhasParaPlanilha, semResposta,
@@ -1043,6 +1044,7 @@ function dialogoTrocarSenha(obrigatorio) {
       campoSenha('Senha nova (12 caracteres ou mais, com um especial como ! @ #)', 'nova', 'new-password'),
       campoSenha('Repita a senha nova', 'repetida', 'new-password'),
     ),
+    h('div', { class: 'opcoes-senha' }, h('label', { class: 'mostrar-senha' }, h('input', { type: 'checkbox' }), ' Mostrar senhas')),
     msg,
     h('div', { class: 'acoes' }, h('button', { type: 'submit', class: 'botao botao-principal' }, 'Trocar senha')),
   );
