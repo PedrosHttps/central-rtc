@@ -2,6 +2,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { spawn } from 'node:child_process';
+import http from 'node:http';
 import { mkdtempSync, readFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
@@ -300,7 +301,20 @@ test('Painel: a pessoa pede acesso sozinha e a revisão aprova ou recusa', async
   const { usuarios } = await (await pedir('/api/usuarios', { sessao: admin.sessao })).json();
   assert.equal(usuarios.find((u) => u.usuario === 'spam@spam.com').decisao.por, 'revisão automática');
 
-  // No máximo 3 pedidos por hora do mesmo endereço.
-  for (let i = 0; i < 3; i++) assert.equal((await pedirAcesso({ ...bia, email: `p${i}@x.com` }, '10.0.1.3')).status, 201);
-  assert.equal((await pedirAcesso({ ...bia, email: 'p9@x.com' }, '10.0.1.3')).status, 429);
+  // No máximo 3 pedidos por hora do mesmo endereço, mesmo com 10 conexões abertas juntas que só mandam o corpo depois.
+  const pedidoLento = (dados, ip) => new Promise((ok, falha) => {
+    const corpo = JSON.stringify(dados);
+    const r = http.request({
+      host: '127.0.0.1', port: 39519, path: '/api/cadastro', method: 'POST',
+      headers: { 'content-type': 'application/json', 'content-length': Buffer.byteLength(corpo), 'x-forwarded-for': ip },
+    }, (resposta) => { resposta.resume(); ok(resposta.statusCode); });
+    r.on('error', falha);
+    r.flushHeaders();
+    setTimeout(() => r.end(corpo), 300);
+  });
+  const simultaneos = await Promise.all(Array.from({ length: 10 }, (_, i) => pedidoLento({ ...bia, email: `p${i}@x.com` }, '10.0.1.3')));
+  assert.deepEqual(simultaneos.toSorted(), [201, 201, 201, 429, 429, 429, 429, 429, 429, 429]);
+  const pendentes = (await (await revisao('/api/pedidos')).json()).pedidos.filter((p) => p.usuario.endsWith('@x.com'));
+  assert.equal(pendentes.length, 3);
+  assert.equal((await pedirAcesso({ ...bia, email: 'p99@x.com' }, '10.0.1.3')).status, 429);
 });

@@ -210,9 +210,6 @@ const cadastrosPorIp = new Map(); // endereço → { n, desde }
 const textoLimpo = (valor, max) => String(valor ?? '').replace(/[\u0000-\u001f\u007f]+/g, ' ').trim().slice(0, max);
 
 async function cadastrar(req, res, ip) {
-  const agora = Date.now();
-  const c = cadastrosPorIp.get(ip);
-  if (c && agora - c.desde < 60 * 60 * 1000 && c.n >= 3) throw erro(429, 'Muitos pedidos deste endereço. Tente de novo daqui a uma hora.');
   const dados = await lerJson(req);
   const email = textoLimpo(dados.email, 64).toLowerCase();
   const pedido = { nome: textoLimpo(dados.nome, 100), empresa: textoLimpo(dados.empresa, 100), motivo: textoLimpo(dados.motivo, 500) };
@@ -220,16 +217,22 @@ async function cadastrar(req, res, ip) {
   if (pedido.nome.length < 2) throw erro(400, 'Informe seu nome.');
   if (pedido.motivo.length < 10) throw erro(400, 'Conte em uma frase para que você vai usar a ferramenta.');
   validarSenha(dados.senha);
+
+  // Conferir e contar sem nenhum await no meio: pedidos simultâneos não passam juntos pelo limite.
+  const agora = Date.now();
+  const c = cadastrosPorIp.get(ip);
+  const naJanela = c && agora - c.desde < 60 * 60 * 1000;
+  if (naJanela && c.n >= 3) throw erro(429, 'Muitos pedidos deste endereço. Tente de novo daqui a uma hora.');
   const pendentes = Object.values(usuarios).filter((u) => u.status === 'pendente').length;
   if (pendentes >= MAX_PENDENTES) throw erro(503, 'Há pedidos demais aguardando análise. Tente de novo mais tarde.');
-
-  if (c && agora - c.desde < 60 * 60 * 1000) c.n++;
+  if (naJanela) c.n++;
   else cadastrosPorIp.set(ip, { n: 1, desde: agora });
   if (cadastrosPorIp.size > 10000) cadastrosPorIp.clear(); // shortcut: mesmo limite do bloqueio de senha
 
-  // E-mail já usado: responde igual e não muda nada, para o cadastro não revelar quem tem conta.
-  if (!registroDe(email)) {
-    const hash = await gerarHash(dados.senha);
+  // O hash é feito sempre, exista ou não o e-mail: assim o tempo de resposta não revela quem tem conta.
+  const hash = await gerarHash(dados.senha);
+  // E-mail já usado: responde igual e não muda nada. Checado depois do await, então o primeiro pedido vence.
+  if (!registroDe(email) && Object.values(usuarios).filter((u) => u.status === 'pendente').length < MAX_PENDENTES) {
     usuarios[email] = { ...hash, status: 'pendente', trocarSenha: false, criadoEm: new Date().toISOString(), pedido };
     salvarUsuarios();
   }
