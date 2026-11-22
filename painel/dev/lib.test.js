@@ -371,13 +371,14 @@ test('Painel: senha com especial, nome e empresa únicos, monitor do administrad
   ]);
 });
 
-// Servidor de e-mail falso com TLS (certificado do openssl): guarda cada mensagem recebida.
+// Servidor de e-mail falso com TLS (certificado do openssl): guarda cada mensagem recebida e recusa falha@x.com.
 async function smtpFalso(t) {
   const pasta = mkdtempSync(path.join(tmpdir(), 'central-rtc-smtp-'));
   const [chave, cert] = [path.join(pasta, 'chave.pem'), path.join(pasta, 'cert.pem')];
   execFileSync('openssl', ['req', '-x509', '-newkey', 'rsa:2048', '-nodes', '-keyout', chave, '-out', cert, '-days', '1', '-subj', '/CN=localhost', '-addext', 'subjectAltName=DNS:localhost'], { stdio: 'ignore' });
   const recebidas = [];
-  const servidor = tls.createServer({ key: readFileSync(chave), cert: readFileSync(cert) }, (s) => {
+  const recusadas = [];
+  const servidor =tls.createServer({ key: readFileSync(chave), cert: readFileSync(cert) }, (s) => {
     let dados = null;
     s.write('220 falso\r\n');
     s.on('data', (d) => {
@@ -389,22 +390,23 @@ async function smtpFalso(t) {
       else if (texto.startsWith('AUTH')) s.write('235 ok\r\n');
       else if (texto.startsWith('DATA')) (dados = ''), s.write('354 manda\r\n');
       else if (texto.startsWith('QUIT')) s.end('221 tchau\r\n');
+      else if (texto.startsWith('RCPT TO:<falha@x.com>')) recusadas.push(texto), s.write('550 caixa inexistente\r\n');
       else s.write('250 ok\r\n');
     });
   });
   await new Promise((ok) => servidor.listen(0, '127.0.0.1', ok));
   t.after(() => { servidor.close(); rmSync(pasta, { recursive: true, force: true }); });
   const extras = { SMTP_HOST: 'localhost', SMTP_PORTA: String(servidor.address().port), SMTP_USUARIO: 'painel@x.com', SMTP_SENHA: 'senha-app', PAINEL_ENDERECO: 'https://painel.exemplo/', NODE_EXTRA_CA_CERTS: cert };
-  return { extras, recebidas };
+  return { extras, recebidas, recusadas };
 }
 
 test('Painel: senha esquecida com link por e-mail', async (t) => {
   let temOpenssl = true;
   try { execFileSync('openssl', ['version'], { stdio: 'ignore' }); } catch { temOpenssl = false; }
   if (!temOpenssl) return t.skip('sem openssl para o certificado do servidor de e-mail falso');
-  const { extras, recebidas } = await smtpFalso(t);
+  const { extras, recebidas, recusadas } = await smtpFalso(t);
   const ativa = { status: 'ativo', criadoEm: new Date().toISOString(), pedido: { nome: 'Eva Reis', empresa: '' } };
-  const { pedir, entrar } = await subirPainel(t, 39523, extras, { 'eva@x.com': ativa, 'pendente@x.com': { ...ativa, status: 'pendente' } });
+  const { pedir, entrar } = await subirPainel(t, 39523, extras, { 'eva@x.com': ativa, 'pendente@x.com': { ...ativa, status: 'pendente' }, 'falha@x.com': ativa });
   const esqueci = (email, ip = '10.0.4.1') => pedir('/api/esqueci', { metodo: 'POST', corpo: { email }, ip });
   const redefinir = (token, senha) => pedir('/api/redefinir', { metodo: 'POST', corpo: { token, senha } });
   const esperar = async (n) => { for (let i = 0; i < 50 && recebidas.length < n; i++) await new Promise((ok) => setTimeout(ok, 50)); };
@@ -456,6 +458,14 @@ test('Painel: senha esquecida com link por e-mail', async (t) => {
   await esqueci('eva@x.com', '10.0.4.5');
   await new Promise((ok) => setTimeout(ok, 300));
   assert.equal(recebidas.length, 3);
+
+  // E-mail que não saiu não deixa link valendo nem conta no limite do dia: a 4ª tentativa ainda tenta enviar.
+  for (let i = 1; i <= 4; i++) {
+    await esqueci('falha@x.com', `10.0.5.${i}`);
+    for (let j = 0; j < 50 && recusadas.length < i; j++) await new Promise((ok) => setTimeout(ok, 50));
+    await new Promise((ok) => setTimeout(ok, 50)); // deixa o painel tratar a recusa antes do próximo pedido
+  }
+  assert.equal(recusadas.length, 4);
 
   // No máximo 5 pedidos por hora do mesmo endereço.
   for (let i = 0; i < 5; i++) await esqueci(`x${i}@x.com`, '10.0.4.7');
