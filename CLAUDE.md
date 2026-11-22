@@ -53,4 +53,4 @@ Com os serviços reais: `docker compose up -d --build` na raiz.
 
 Com `servicos-windows.ps1` (regime geral 1.7.2, Simples 1.0.2, banco V0073): `status`, lotes do Simples e do regime geral (com e sem erro), geração e validação de XML, DANFSe em PDF e o painel no navegador. Formatos reais: versão em `versaoApp`; erro do DANFSe em `mensagem`; erro de validação do regime geral é ProblemDetail com `title` + `detail` (sem `errors[]`); erros por item vêm em `objetos[].erros[]` com o código no texto (`REG-004`, `VSN-021`); `xml/validate` responde JSON `true`.
 
-Ainda não rodado: o build do `docker compose` (a máquina de teste não tem virtualização ligada). O Dockerfile segue os mesmos passos do script.
+`docker compose up -d --build` também conferido (22/11/2026, Docker 29 no Ubuntu do WSL 2, sem Docker Desktop): os 4 containers sobem, lotes do Simples e do regime geral e o DANFSe em PDF funcionam. No WSL, o Ubuntu desliga quando fica sem janela aberta e derruba os containers; `instanceIdleTimeout=-1` e `vmIdleTimeout=-1` no `.wslconfig` evitam isso.
