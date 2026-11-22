@@ -17,7 +17,7 @@ Painel web + linha de comando que usam os três serviços de código aberto da R
   - Senha provisória obriga a trocar em `/api/senha` antes de qualquer consulta.
   - Bloqueio por IP depois de 10 senhas erradas diferentes. O IP vem do último item do `X-Forwarded-For`, e o IPv6 conta pelo bloco /64.
   - Cadastro pela própria pessoa em `/api/cadastro`: a conta nasce com `status: pendente`. E-mail repetido responde igual, sem revelar nada. Limite de 3 pedidos por hora por IP e de 100 pedidos pendentes.
-  - `Authorization: Bearer PAINEL_TOKEN_REVISAO` só lista `/api/pedidos` e aprova ou recusa. Usado pela tarefa agendada `central-rtc-revisar-pedidos` do Claude Code.
+  - `Authorization: Bearer PAINEL_TOKEN_REVISAO` só lista `/api/pedidos` e aprova ou recusa. Usado pelo `vigia-pedidos.ps1`, que roda escondido e sobe no login. A cada minuto ele lista a fila sem IA e, quando ela muda, chama `claude -p --tools Bash` com as instruções de `revisao-pedidos.md`. A permissão vale só para `powershell.exe ... revisao-pedidos.ps1 *`, que faz listar, aprovar e recusar, lê a chave sem mostrá-la e é salvo com BOM. A ferramenta PowerShell do Claude recusa abrir outro PowerShell, por isso é Bash. O log fica em `revisao-pedidos.log`, fora do Git. A tarefa agendada `central-rtc-revisar-pedidos`, de hora em hora, está pausada.
   - Google (opcional, `GOOGLE_CLIENT_ID` + `GOOGLE_CLIENT_SECRET` + `PAINEL_URL`), em `/api/google/entrar` → `/api/google/retorno`:
     - Fluxo de código com PKCE; o `state.verificador` vai num cookie `SameSite=Lax`.
     - Sem conta: o `google_cadastro` leva a `cadastro.html?google=1`. O pedido é gravado sem hash (conta só do Google, que nunca entra por senha) e com `pedido.emailConfirmado`.
