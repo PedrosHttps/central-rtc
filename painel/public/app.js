@@ -202,6 +202,8 @@ async function atualizarStatus() {
     aviso.replaceChildren(
       `${fora.length === 3 ? 'Nenhum serviço respondeu' : `Fora do ar: ${fora.join(', ')}`}. Suba os serviços com `,
       h('code', { text: 'docker compose up -d' }),
+      ' ou, no Windows sem Docker, ',
+      h('code', { text: 'powershell -ExecutionPolicy Bypass -File servicos-windows.ps1' }),
       ' na pasta do projeto (a primeira vez demora alguns minutos) e clique em Verificar de novo.',
     );
   }
