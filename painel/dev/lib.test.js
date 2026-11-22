@@ -4,7 +4,7 @@ import assert from 'node:assert/strict';
 import { spawn } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import http from 'node:http';
-import { mkdtempSync, readFileSync, rmSync } from 'node:fs';
+import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -146,8 +146,9 @@ test('leitura do resultado do regime geral (formato da documentação oficial)',
 const CHAVE_REVISAO = 'chave-de-revisao-de-teste-com-mais-de-32-caracteres';
 
 // Sobe o painel de verdade com login e uma pasta de dados temporária; devolve funções para fazer requisições.
-async function subirPainel(t, porta, extras = {}) {
+async function subirPainel(t, porta, extras = {}, usuariosIniciais = null) {
   const dados = mkdtempSync(path.join(tmpdir(), 'central-rtc-'));
+  if (usuariosIniciais) writeFileSync(path.join(dados, 'usuarios.json'), JSON.stringify(usuariosIniciais));
   const env = {
     ...process.env, PORTA: String(porta), HOST: '127.0.0.1', PAINEL_DADOS: dados,
     PAINEL_USUARIO: 'ana', PAINEL_SENHA: 'senha-de-teste-123', PAINEL_EMAIL_ACESSO: 'acesso@exemplo.com',
@@ -295,7 +296,7 @@ test('Painel: a pessoa pede acesso sozinha e a revisão aprova ou recusa', async
   assert.equal((await entrar('bia@empresa.com.br', 'senha-do-intruso-1')).status, 401);
 
   // Recusado não entra; o administrador vê quem decidiu.
-  assert.equal((await pedirAcesso({ ...bia, nome: 'Robô', email: 'spam@spam.com' }, '10.0.1.2')).status, 201);
+  assert.equal((await pedirAcesso({ ...bia, nome: 'Robô', empresa: 'Spam Ltda', email: 'spam@spam.com' }, '10.0.1.2')).status, 201);
   assert.equal((await revisao('/api/usuarios/spam%40spam.com/recusar', 'POST')).status, 200);
   assert.match((await entrar('spam@spam.com', 'senha-da-bia-123')).dados.mensagem, /recusado/);
   const admin = await entrar('ana', 'senha-de-teste-123');
@@ -313,9 +314,58 @@ test('Painel: a pessoa pede acesso sozinha e a revisão aprova ou recusa', async
     r.flushHeaders();
     setTimeout(() => r.end(corpo), 300);
   });
-  const simultaneos = await Promise.all(Array.from({ length: 10 }, (_, i) => pedidoLento({ ...bia, email: `p${i}@x.com` }, '10.0.1.3')));
+  const simultaneos = await Promise.all(Array.from({ length: 10 }, (_, i) => pedidoLento({ ...bia, nome: `Pessoa ${i}`, empresa: '', email: `p${i}@x.com` }, '10.0.1.3')));
   assert.deepEqual(simultaneos.toSorted(), [201, 201, 201, 429, 429, 429, 429, 429, 429, 429]);
   const pendentes = (await (await revisao('/api/pedidos')).json()).pedidos.filter((p) => p.usuario.endsWith('@x.com'));
   assert.equal(pendentes.length, 3);
   assert.equal((await pedirAcesso({ ...bia, email: 'p99@x.com' }, '10.0.1.3')).status, 429);
+});
+
+test('Painel: senha com especial, nome e empresa únicos, monitor do administrador e limpeza de recusados', async (t) => {
+  const dias = (n) => new Date(Date.now() - n * 24 * 60 * 60 * 1000).toISOString();
+  const recusado = (nome, n) => ({ status: 'recusado', criadoEm: dias(n), pedido: { nome, empresa: '' }, decisao: { acao: 'recusar', por: 'revisão automática', em: dias(n) } });
+  const { pedir, entrar } = await subirPainel(t, 39522, {}, { 'velho@x.com': recusado('Velho Recusado', 40), 'rafa@x.com': recusado('Rafa Lima', 5) });
+  const pedirAcesso = (dados, ip) => pedir('/api/cadastro', { metodo: 'POST', corpo: dados, ip });
+  const carla = { nome: 'Carla Dias', email: 'carla@x.com', empresa: 'Padaria Sol', senha: 'senha-da-carla-1' };
+
+  // Senha sem caractere especial (espaço não conta) é recusada.
+  const semEspecial = await pedirAcesso({ ...carla, senha: 'senhasemespecial 123' }, '10.0.3.9');
+  assert.equal(semEspecial.status, 400);
+  assert.match((await semEspecial.json()).mensagem, /especial/);
+  assert.equal((await pedirAcesso(carla, '10.0.3.1')).status, 201);
+
+  // Nome e empresa não se repetem, nem trocando maiúsculas, acentos ou espaços.
+  const mesmoNome = await pedirAcesso({ ...carla, nome: 'carla  días', empresa: '', email: 'outra@x.com' }, '10.0.3.2');
+  assert.equal(mesmoNome.status, 409);
+  assert.match((await mesmoNome.json()).mensagem, /nome/);
+  const mesmaEmpresa = await pedirAcesso({ ...carla, nome: 'Davi Melo', empresa: 'PADARIA SOL', email: 'davi@x.com' }, '10.0.3.3');
+  assert.equal(mesmaEmpresa.status, 409);
+  assert.match((await mesmaEmpresa.json()).mensagem, /empresa/);
+  // O nome de um pedido recusado fica livre.
+  assert.equal((await pedirAcesso({ ...carla, nome: 'Rafa Lima', empresa: '', email: 'rafa2@x.com' }, '10.0.3.4')).status, 201);
+
+  // Quem não é administrador não vê o monitor.
+  const admin = await entrar('ana', 'senha-de-teste-123');
+  assert.equal((await pedir('/api/usuarios/carla%40x.com/aprovar', { metodo: 'POST', corpo: {}, sessao: admin.sessao })).status, 200);
+  const sessaoCarla = (await entrar('carla@x.com', 'senha-da-carla-1', '10.0.3.1')).sessao;
+  assert.equal((await pedir('/api/monitor', { sessao: sessaoCarla })).status, 403);
+  const pagina = await pedir('/admin.html', { sessao: sessaoCarla });
+  assert.equal(pagina.status, 302);
+  assert.equal(pagina.headers.get('location'), '/');
+  assert.equal((await pedir('/admin.html', { sessao: admin.sessao })).status, 200);
+
+  const monitor = await (await pedir('/api/monitor', { sessao: admin.sessao })).json();
+  const conectadaCarla = monitor.conectados.find((c) => c.usuario === 'carla@x.com');
+  assert.equal(conectadaCarla.ip, '10.0.3.1');
+  assert.ok(monitor.contas.find((c) => c.usuario === 'carla@x.com').ultimoAcesso);
+  // Recusado há mais de 30 dias foi apagado ao subir; o recente continua.
+  assert.deepEqual(monitor.contas.map((c) => c.usuario).toSorted(), ['carla@x.com', 'rafa2@x.com', 'rafa@x.com']);
+  // Tentativas, da mais nova para a mais velha, inclusive as recusadas.
+  assert.deepEqual(monitor.tentativas.map((t) => [t.email, t.resultado.split(/[.,]/)[0]]), [
+    ['rafa2@x.com', 'Conta criada'],
+    ['davi@x.com', 'Essa empresa já tem uma conta'],
+    ['outra@x.com', 'Já existe uma conta com esse nome'],
+    ['carla@x.com', 'Conta criada'],
+    ['carla@x.com', 'A senha precisa ter pelo menos um caractere especial'],
+  ]);
 });

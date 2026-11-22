@@ -5,14 +5,19 @@
 $ErrorActionPreference = 'Continue'
 $pasta = $PSScriptRoot
 $script = Join-Path $pasta 'revisao-pedidos.ps1'
-$log = Join-Path $pasta 'revisao-pedidos.log'
 $permissao = "Bash(powershell.exe -NoProfile -ExecutionPolicy Bypass -File $($script.Replace('\', '/')) *)"
 
 # Um vigia por vez.
 $trava = New-Object System.Threading.Mutex($false, 'Global\central-rtc-vigia-pedidos')
 if (-not $trava.WaitOne(0)) { exit 0 }
 
-function Registrar($texto) { Add-Content -Path $log -Value "$(Get-Date -Format 'yyyy-MM-dd HH:mm:ss') $texto" -Encoding UTF8 }
+# Um registro por mês; ficam só os 3 mais recentes, porque eles guardam nome e e-mail de quem pediu conta (LGPD).
+function Registrar($texto) {
+  Add-Content -Path (Join-Path $pasta "revisao-pedidos-$(Get-Date -Format 'yyyy-MM').log") -Value "$(Get-Date -Format 'yyyy-MM-dd HH:mm:ss') $texto" -Encoding UTF8
+}
+function LimparRegistros {
+  Get-ChildItem $pasta -Filter 'revisao-pedidos*.log' | Sort-Object LastWriteTime -Descending | Select-Object -Skip 3 | Remove-Item
+}
 function Fila { (& powershell -NoProfile -ExecutionPolicy Bypass -File $script listar 2>$null | Out-String).Trim() }
 
 # No máximo 10 análises por hora: um robô mandando pedidos sem parar não vira uma chamada do Claude a cada minuto.
@@ -50,7 +55,7 @@ $avisouCopia = $null
 while ($true) {
   $hoje = (Get-Date).Date
   if ($copiaFeita -ne $hoje) {
-    if (CopiarContas) { $copiaFeita = $hoje; Registrar 'cópia das contas salva' }
+    if (CopiarContas) { $copiaFeita = $hoje; LimparRegistros; Registrar 'cópia das contas salva' }
     elseif ($avisouCopia -ne $hoje) { Registrar 'não consegui copiar as contas; tento de novo no próximo minuto'; $avisouCopia = $hoje }
   }
   $fila = Fila

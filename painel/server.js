@@ -74,18 +74,36 @@ function salvarUsuarios() {
   renameSync(temporario, ARQUIVO_USUARIOS); // troca de uma vez: uma queda no meio não corrompe o arquivo
 }
 
+// LGPD: pedido recusado não fica guardado para sempre; some 30 dias depois da decisão.
+const GUARDA_RECUSADOS_MS = 30 * 24 * 60 * 60 * 1000;
+function limparRecusados(agora = Date.now()) {
+  let mudou = false;
+  for (const [nome, u] of Object.entries(usuarios)) {
+    if (u.status === 'recusado' && agora - Date.parse(u.decisao?.em || u.criadoEm) > GUARDA_RECUSADOS_MS) {
+      delete usuarios[nome];
+      mudou = true;
+    }
+  }
+  if (mudou) salvarUsuarios();
+}
+if (COM_LOGIN) {
+  limparRecusados();
+  setInterval(limparRecusados, 6 * 60 * 60 * 1000).unref();
+}
+
 const registroDe = (nome) => (nome === ADMIN ? REGISTRO_ADMIN : usuarios[nome]);
 const estaAtivo = (nome) => nome === ADMIN || (Boolean(usuarios[nome]) && (usuarios[nome].status || 'ativo') === 'ativo');
 
 // shortcut: sessões só na memória; reiniciar o painel pede login de novo a todos, ok para poucos usuários
 const SESSAO_MS = 12 * 60 * 60 * 1000;
-const sessoes = new Map(); // token → { nome, expira }
+const sessoes = new Map(); // token → { nome, expira, criadaEm, vistoEm, ip, aparelho }; o monitor do administrador lê daqui
 
-function criarSessao(nome) {
+function criarSessao(nome, req, ip) {
   const agora = Date.now();
   for (const [t, s] of sessoes) if (s.expira < agora) sessoes.delete(t);
   const token = randomBytes(32).toString('base64url');
-  sessoes.set(token, { nome, expira: agora + SESSAO_MS });
+  const aparelho = textoLimpo(req.headers['user-agent'], 300);
+  sessoes.set(token, { nome, expira: agora + SESSAO_MS, criadaEm: agora, vistoEm: agora, ip, aparelho });
   return token;
 }
 
@@ -99,6 +117,7 @@ function sessaoDe(req) {
     sessoes.delete(token);
     return null;
   }
+  s.vistoEm = Date.now();
   const u = usuarios[s.nome];
   return { token, nome: s.nome, admin: s.nome === ADMIN, trocarSenha: Boolean(u?.trocarSenha) };
 }
@@ -165,6 +184,7 @@ async function lerJson(req) {
 function validarSenha(senha) {
   if (typeof senha !== 'string' || senha.length < SENHA_MIN) throw erro(400, `A senha precisa ter pelo menos ${SENHA_MIN} caracteres.`);
   if (senha.length > 200) throw erro(400, 'A senha pode ter no máximo 200 caracteres.');
+  if (!/[^\p{L}\p{N}\s]/u.test(senha)) throw erro(400, 'A senha precisa ter pelo menos um caractere especial, como ! @ # $ % & * ?');
 }
 
 async function entrar(req, res, ip) {
@@ -186,7 +206,11 @@ async function entrar(req, res, ip) {
   const status = usuarios[nome]?.status;
   if (status === 'pendente') throw erro(403, 'Sua conta ainda está em análise. Normalmente leva 1 a 2 minutos.');
   if (status === 'recusado') throw erro(403, 'Seu pedido de acesso foi recusado.');
-  res.setHeader('Set-Cookie', cookieSessao(req, criarSessao(nome), SESSAO_MS / 1000));
+  if (usuarios[nome]) {
+    usuarios[nome].ultimoAcesso = new Date().toISOString();
+    salvarUsuarios();
+  }
+  res.setHeader('Set-Cookie', cookieSessao(req, criarSessao(nome, req, ip), SESSAO_MS / 1000));
   return responderJson(res, 200, { usuario: nome, admin: nome === ADMIN, trocarSenha: Boolean(usuarios[nome]?.trocarSenha) });
 }
 
@@ -214,10 +238,42 @@ const cadastrosPorIp = new Map(); // endereço → { n, desde }
 // Texto livre vindo de desconhecidos: sem caracteres de controle e com tamanho limitado.
 const textoLimpo = (valor, max) => String(valor ?? '').replace(/[\u0000-\u001f\u007f]+/g, ' ').trim().slice(0, max);
 
+// Últimas 200 tentativas de cadastro, para o monitor do administrador.
+// Só na memória: somem quando o painel reinicia (LGPD: guardar o mínimo pelo menor tempo).
+const tentativas = [];
+
+function anotarTentativa(ip, email, pedido, resultado) {
+  tentativas.push({ em: new Date().toISOString(), ip, email, nome: pedido.nome, empresa: pedido.empresa, resultado });
+  if (tentativas.length > 200) tentativas.shift();
+}
+
+// Nome e empresa não se repetem entre contas, sem diferença de maiúsculas, acentos ou espaços. Pedidos recusados não contam.
+const comparavel = (texto) => String(texto || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/\s+/g, ' ').trim();
+
+function conferirUnicos(email, pedido) {
+  for (const [nome, u] of Object.entries(usuarios)) {
+    if (nome === email || u.status === 'recusado' || !u.pedido) continue;
+    if (comparavel(u.pedido.nome) === comparavel(pedido.nome)) throw erro(409, 'Já existe uma conta com esse nome. Use seu nome completo.');
+    if (pedido.empresa && comparavel(u.pedido.empresa) === comparavel(pedido.empresa)) {
+      throw erro(409, 'Essa empresa já tem uma conta. Peça acesso a quem a cadastrou ou fale com o administrador.');
+    }
+  }
+}
+
 async function cadastrar(req, res, ip) {
   const dados = await lerJson(req);
   const email = textoLimpo(dados.email, 64).toLowerCase();
   const pedido = { nome: textoLimpo(dados.nome, 100), empresa: textoLimpo(dados.empresa, 100) };
+  try {
+    anotarTentativa(ip, email, pedido, await registrarPedido(dados, email, pedido, ip));
+  } catch (e) {
+    anotarTentativa(ip, email, pedido, e.message);
+    throw e;
+  }
+  return responderJson(res, 201, { mensagem: 'Conta criada. Em 1 a 2 minutos ela é liberada e você já pode entrar.' });
+}
+
+async function registrarPedido(dados, email, pedido, ip) {
   if (!EMAIL_VALIDO.test(email) || !NOME_VALIDO.test(email)) throw erro(400, 'Informe um e-mail válido (até 64 caracteres).');
   if (pedido.nome.length < 2) throw erro(400, 'Informe seu nome.');
   validarSenha(dados.senha);
@@ -235,18 +291,42 @@ async function cadastrar(req, res, ip) {
 
   // O hash é feito sempre, exista ou não o e-mail: assim o tempo de resposta não revela quem tem conta.
   const hash = await gerarHash(dados.senha);
-  // E-mail já usado: responde igual e não muda nada. Checado depois do await, então o primeiro pedido vence.
-  if (!registroDe(email) && Object.values(usuarios).filter((u) => u.status === 'pendente').length < MAX_PENDENTES) {
-    usuarios[email] = {
-      ...hash,
-      status: 'pendente',
-      trocarSenha: false,
-      criadoEm: new Date().toISOString(),
-      pedido,
-    };
-    salvarUsuarios();
-  }
-  return responderJson(res, 201, { mensagem: 'Conta criada. Em 1 a 2 minutos ela é liberada e você já pode entrar.' });
+  // Tudo daqui para baixo roda sem await: o primeiro de dois pedidos simultâneos vence.
+  conferirUnicos(email, pedido);
+  // E-mail já usado: responde igual e não muda nada, para ninguém descobrir quem tem conta.
+  if (registroDe(email)) return 'E-mail já tinha conta (resposta igual, nada mudou)';
+  if (Object.values(usuarios).filter((u) => u.status === 'pendente').length >= MAX_PENDENTES) return 'Fila cheia (nada gravado)';
+  usuarios[email] = {
+    ...hash,
+    status: 'pendente',
+    trocarSenha: false,
+    criadoEm: new Date().toISOString(),
+    pedido,
+  };
+  salvarUsuarios();
+  return 'Conta criada, aguardando análise';
+}
+
+// Monitor do administrador: quem está com sessão aberta, todas as contas e as últimas tentativas de cadastro.
+function monitorar(res) {
+  const agora = Date.now();
+  const iso = (ms) => new Date(ms).toISOString();
+  const conectados = [...sessoes.values()]
+    .filter((s) => s.expira > agora && estaAtivo(s.nome))
+    .map((s) => ({ usuario: s.nome, desde: iso(s.criadaEm), vistoEm: iso(s.vistoEm), ip: s.ip, aparelho: s.aparelho }))
+    .sort((a, b) => b.vistoEm.localeCompare(a.vistoEm));
+  const contas = Object.entries(usuarios)
+    .map(([usuario, u]) => ({
+      usuario,
+      nome: u.pedido?.nome || null,
+      empresa: u.pedido?.empresa || null,
+      status: u.status || 'ativo',
+      criadoEm: u.criadoEm,
+      ultimoAcesso: u.ultimoAcesso || null,
+      decisao: u.decisao || null,
+    }))
+    .sort((a, b) => (b.criadoEm || '').localeCompare(a.criadoEm || ''));
+  return responderJson(res, 200, { agora: iso(agora), conectados, contas, tentativas: [...tentativas].reverse() });
 }
 
 function listarPedidos(res) {
@@ -367,8 +447,13 @@ async function controlarAcesso(req, res, caminho) {
   if (sessao.trocarSenha && (caminho.startsWith('/api/') || caminho.startsWith('/svc/') || caminho === '/status')) {
     throw erro(403, 'Troque a senha provisória antes de continuar.');
   }
-  if (caminho === '/api/pedidos' || caminho === '/api/usuarios' || caminho.startsWith('/api/usuarios/')) {
+  if (caminho === '/admin.html' && !sessao.admin) {
+    res.writeHead(302, { Location: '/', 'Cache-Control': 'no-store' });
+    return res.end();
+  }
+  if (caminho === '/api/pedidos' || caminho === '/api/usuarios' || caminho.startsWith('/api/usuarios/') || caminho === '/api/monitor') {
     if (!sessao.admin) throw erro(403, 'Só o administrador cuida dos usuários.');
+    if (caminho === '/api/monitor' && req.method === 'GET') return monitorar(res);
     if (caminho === '/api/pedidos' && req.method === 'GET') return listarPedidos(res);
     if (decisao && req.method === 'POST') return decidirPedido(req, res, decodeURIComponent(decisao[1]), decisao[2], sessao.nome);
     return rotasDeUsuarios(req, res, caminho);

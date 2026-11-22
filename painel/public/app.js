@@ -5,6 +5,7 @@ import {
 import { lerCSV, gerarCSV } from './lib/csv.js';
 import { moeda, percentual } from './lib/formato.js';
 import { criarZip, nomeUnico } from './lib/zip.js';
+import { h } from './lib/dom.js';
 
 const cliente = criarCliente({ rg: '/svc/rg', sn: '/svc/sn', danfse: '/svc/danfse' });
 
@@ -12,22 +13,6 @@ const cliente = criarCliente({ rg: '/svc/rg', sn: '/svc/sn', danfse: '/svc/danfs
 
 const $ = (sel, raiz = document) => raiz.querySelector(sel);
 const $$ = (sel, raiz = document) => [...raiz.querySelectorAll(sel)];
-
-function h(tag, atributos = {}, ...filhos) {
-  const el = document.createElement(tag);
-  for (const [k, v] of Object.entries(atributos || {})) {
-    if (v === null || v === undefined || v === false) continue;
-    if (k === 'class') el.className = v;
-    else if (k === 'text') el.textContent = v;
-    else if (k.startsWith('on')) el.addEventListener(k.slice(2), v);
-    else el.setAttribute(k, v === true ? '' : v);
-  }
-  for (const f of filhos.flat()) {
-    if (f === null || f === undefined || f === false) continue;
-    el.append(f instanceof Node ? f : document.createTextNode(String(f)));
-  }
-  return el;
-}
 
 function hojeISO() {
   const d = new Date();
@@ -1015,7 +1000,9 @@ async function api(caminho, { metodo = 'GET', corpo } = {}) {
 
 function senhaAleatoria() {
   const letras = 'abcdefghijkmnpqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // sem 0/O, 1/l/I, que se confundem
-  return [...crypto.getRandomValues(new Uint32Array(16))].map((n) => letras[n % letras.length]).join('');
+  const sorteio = [...crypto.getRandomValues(new Uint32Array(16))];
+  // A regra de senha pede um caractere especial: o último sai sempre dessa lista.
+  return sorteio.slice(0, 15).map((n) => letras[n % letras.length]).join('') + '!@#$%&*?'[sorteio[15] % 8];
 }
 
 function abrirDialogo(titulo, conteudo, { obrigatorio = false } = {}) {
@@ -1053,7 +1040,7 @@ function dialogoTrocarSenha(obrigatorio) {
     obrigatorio ? h('p', { class: 'nota', text: 'Você entrou com uma senha provisória. Escolha uma senha sua para continuar.' }) : null,
     h('div', { class: 'ficha' },
       campoSenha('Senha atual', 'atual', 'current-password'),
-      campoSenha('Senha nova (12 caracteres ou mais)', 'nova', 'new-password'),
+      campoSenha('Senha nova (12 caracteres ou mais, com um especial como ! @ #)', 'nova', 'new-password'),
       campoSenha('Repita a senha nova', 'repetida', 'new-password'),
     ),
     msg,
@@ -1202,7 +1189,10 @@ async function iniciarConta() {
   trocar(area,
     h('span', { class: 'conta-nome' }, 'Entrou como ', h('strong', { text: eu.usuario })),
     eu.admin
-      ? h('button', { type: 'button', class: 'botao botao-discreto', onclick: dialogoUsuarios }, 'Usuários')
+      ? [
+        h('button', { type: 'button', class: 'botao botao-discreto', onclick: dialogoUsuarios }, 'Usuários'),
+        h('a', { class: 'botao botao-discreto', href: 'admin.html' }, 'Monitor'),
+      ]
       : h('button', { type: 'button', class: 'botao botao-discreto', onclick: () => dialogoTrocarSenha(false) }, 'Trocar senha'),
     h('a', { class: 'botao botao-discreto', href: 'https://pedroshttps.github.io/central-rtc/guia.html', target: '_blank', rel: 'noopener' }, 'Guia'),
     h('button', {

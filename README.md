@@ -145,7 +145,22 @@ Os pedidos são aprovados ou recusados pelo administrador, também em **Usuário
 
 **Esqueceu a senha:** a tela de login tem o link "Esqueceu a senha?", que abre um e-mail para `PAINEL_EMAIL_ACESSO`. Responda só se o pedido vier do mesmo e-mail da conta: em **Usuários**, gere uma senha provisória e mande para a pessoa. No primeiro acesso o painel obriga a trocar.
 
-Depois de 10 senhas erradas em 15 minutos, o endereço de internet fica sem conseguir entrar por 15 minutos. As sessões duram 12 horas e só existem na memória: reiniciar o painel pede login de novo a todos.
+Senhas precisam ter 12 caracteres ou mais e pelo menos um caractere especial (como `! @ # $ %`). Cada e-mail, cada nome e cada empresa só podem ter uma conta: maiúsculas, acentos e espaços não contam como diferença, e pedidos recusados não ocupam o nome. Depois de 10 senhas erradas em 15 minutos, o endereço de internet fica sem conseguir entrar por 15 minutos. As sessões duram 12 horas e só existem na memória: reiniciar o painel pede login de novo a todos.
+
+### Monitor do administrador
+
+O administrador tem o botão **Monitor**, que abre `/admin.html`. A página mostra quem está conectado (com IP, aparelho e último uso), todas as contas (com o último acesso) e as 200 tentativas de cadastro mais recentes, inclusive as recusadas pelas regras. Ela se atualiza a cada 20 segundos. Para quem não é administrador, a página volta para o painel e `/api/monitor` responde 403.
+
+### Privacidade (LGPD)
+
+O aviso de privacidade fica em [`docs/privacidade.html`](https://pedroshttps.github.io/central-rtc/privacidade.html), com link no rodapé de todas as telas. Para cumprir os prazos que ele promete:
+
+- pedidos recusados são apagados 30 dias depois da decisão (ao subir o painel e a cada 6 horas);
+- sessões, tentativas de cadastro e bloqueios ficam só na memória;
+- o `vigia-pedidos.ps1` grava um registro por mês (`revisao-pedidos-AAAA-MM.log`) e guarda só os 3 últimos;
+- as cópias das contas ficam 30 dias.
+
+Se mudar o que é guardado ou por quanto tempo, atualize o aviso.
 
 ### Cópia das contas
 

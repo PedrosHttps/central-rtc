@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Aviso de privacidade — Central RTC</title>
+  <meta name="description" content="Quais dados pessoais a Central RTC trata, para quê, por quanto tempo e como exercer os seus direitos pela LGPD.">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect x='3' y='3' width='26' height='26' rx='3' fill='none' stroke='%235A2D82' stroke-width='3'/%3E%3Cpath d='M9 12h14M9 17h14M9 22h8' stroke='%2315253A' stroke-width='2.5'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="estilo.css">
+</head>
+<body>
+  <header class="topo">
+    <div class="moldura">
+      <a class="marca" href="./">Central RTC</a>
+      <nav aria-label="Navegação">
+        <a href="https://central-rtc.taild4c7a5.ts.net">Usar online</a>
+        <a class="opcional" href="guia.html">Guia</a>
+        <a class="opcional" href="./">Página do projeto</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="guia">
+    <div class="moldura">
+      <div class="guia-abertura">
+        <span class="carimbo">LGPD</span>
+        <h1>Aviso de privacidade</h1>
+        <p class="lead">Como a Central RTC trata os seus dados pessoais, conforme a Lei Geral de Proteção de Dados (Lei 13.709/2018). Em resumo: guardamos só o necessário para a sua conta funcionar e não gravamos nada do que você calcula.</p>
+        <p class="nota">Atualizado em 22 de novembro de 2026.</p>
+      </div>
+
+      <section id="controlador">
+        <h2>Quem cuida dos dados</h2>
+        <p>A Central RTC é um projeto independente e de código aberto, mantido por Pedro Henrique, que é o controlador dos dados. Ela não é um serviço da Receita Federal.</p>
+        <p>Para qualquer assunto de privacidade, inclusive para exercer os seus direitos, escreva para <a href="mailto:solicitaracesso67@gmail.com">solicitaracesso67@gmail.com</a>. Esse é o canal do encarregado pelo tratamento de dados.</p>
+      </section>
+
+      <section id="dados">
+        <h2>Quais dados tratamos</h2>
+        <div class="tabela-guia">
+          <table>
+            <thead><tr><th>Dado</th><th>Para quê</th><th>Por quanto tempo</th></tr></thead>
+            <tbody>
+              <tr><td data-rotulo="Dado: ">Nome, e-mail e empresa (opcional)</td><td data-rotulo="Para quê: ">Criar a sua conta, identificar você e evitar contas repetidas</td><td data-rotulo="Tempo: ">Enquanto a conta existir</td></tr>
+              <tr><td data-rotulo="Dado: ">Senha</td><td data-rotulo="Para quê: ">Entrar na conta. Guardamos só uma versão embaralhada (hash scrypt), que ninguém consegue ler</td><td data-rotulo="Tempo: ">Enquanto a conta existir</td></tr>
+              <tr><td data-rotulo="Dado: ">Data de criação, último acesso e situação da conta</td><td data-rotulo="Para quê: ">Administrar as contas e a segurança</td><td data-rotulo="Tempo: ">Enquanto a conta existir</td></tr>
+              <tr><td data-rotulo="Dado: ">Pedido de conta recusado</td><td data-rotulo="Para quê: ">Registrar a decisão da checagem contra robôs</td><td data-rotulo="Tempo: ">30 dias depois da decisão</td></tr>
+              <tr><td data-rotulo="Dado: ">Endereço de internet (IP) e tipo de navegador de quem está conectado</td><td data-rotulo="Para quê: ">Segurança e monitoramento de acessos pelo administrador</td><td data-rotulo="Tempo: ">Até a sessão acabar (no máximo 12 horas), só na memória</td></tr>
+              <tr><td data-rotulo="Dado: ">Tentativas de cadastro (IP, e-mail, nome, empresa e resultado)</td><td data-rotulo="Para quê: ">Detectar robôs e abusos</td><td data-rotulo="Tempo: ">Só na memória, as 200 mais recentes; somem quando o servidor reinicia</td></tr>
+              <tr><td data-rotulo="Dado: ">IP de quem erra a senha</td><td data-rotulo="Para quê: ">Bloquear quem tenta adivinhar senhas</td><td data-rotulo="Tempo: ">15 minutos, só na memória</td></tr>
+              <tr><td data-rotulo="Dado: ">Registro da checagem automática (nome, e-mail e decisão)</td><td data-rotulo="Para quê: ">Conferir se a checagem está funcionando</td><td data-rotulo="Tempo: ">Até 3 meses</td></tr>
+              <tr><td data-rotulo="Dado: ">Cópias de segurança das contas</td><td data-rotulo="Para quê: ">Recuperar as contas se o servidor falhar</td><td data-rotulo="Tempo: ">30 dias</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="destaque"><strong>O que não guardamos:</strong> planilhas, XMLs de notas, valores digitados e resultados dos cálculos. Eles são processados no servidor e descartados em seguida.</p>
+      </section>
+
+      <section id="bases">
+        <h2>Bases legais</h2>
+        <ul>
+          <li><strong>Execução de contrato</strong> (art. 7º, V): os dados da conta são necessários para você usar a ferramenta.</li>
+          <li><strong>Legítimo interesse</strong> (art. 7º, IX): IP, tentativas de cadastro e bloqueio de senhas protegem a ferramenta e os próprios usuários contra fraude e robôs.</li>
+          <li><strong>Cumprimento de obrigação legal</strong> (art. 7º, II): quando uma autoridade exigir.</li>
+        </ul>
+      </section>
+
+      <section id="automatizada">
+        <h2>Checagem automática com IA</h2>
+        <p>Toda conta nova passa por uma checagem automática contra robôs e spam, feita com o Claude, uma inteligência artificial da empresa Anthropic. Ela analisa só o nome, o e-mail e a empresa do pedido e decide se libera a conta.</p>
+        <p>Se o seu pedido for recusado e você achar que foi um engano, pode pedir que uma pessoa revise a decisão (art. 20 da LGPD), pelo e-mail de contato.</p>
+      </section>
+
+      <section id="compartilhamento">
+        <h2>Com quem os dados são compartilhados</h2>
+        <ul>
+          <li><strong>Anthropic</strong> (Estados Unidos): recebe nome, e-mail e empresa de cada pedido de conta, só para a checagem contra robôs.</li>
+          <li><strong>Tailscale</strong> (Estados Unidos): a conexão com a ferramenta passa pela rede dela, criptografada de ponta a ponta. A Tailscale não tem acesso ao conteúdo.</li>
+          <li><strong>GitHub</strong> (Estados Unidos): hospeda esta página e a página do projeto. Não recebe nenhum dado da sua conta.</li>
+        </ul>
+        <p>Por isso há transferência internacional de dados, feita para executar o serviço que você pediu (art. 33, IX da LGPD). As calculadoras da Receita rodam no próprio servidor da Central RTC: nada do que você calcula é enviado à Receita Federal. Não vendemos nem cedemos dados para publicidade.</p>
+      </section>
+
+      <section id="cookies">
+        <h2>Cookies</h2>
+        <p>A ferramenta usa um único cookie, chamado <code>sessao</code>, que mantém você conectado por até 12 horas. Ele é essencial para o login funcionar. Não usamos cookies de propaganda, de estatística nem de rastreamento.</p>
+      </section>
+
+      <section id="seguranca">
+        <h2>Segurança</h2>
+        <p>O acesso é sempre por HTTPS. As senhas ficam embaralhadas, o endereço que erra a senha muitas vezes é bloqueado, e só o administrador vê a lista de contas. O código é aberto e pode ser conferido no <a href="https://github.com/PedrosHttps/central-rtc">GitHub</a>.</p>
+      </section>
+
+      <section id="direitos">
+        <h2>Seus direitos</h2>
+        <p>Pelo art. 18 da LGPD, você pode pedir, a qualquer momento:</p>
+        <ul>
+          <li>a confirmação de que tratamos dados seus e uma cópia deles;</li>
+          <li>a correção de dados incompletos ou errados;</li>
+          <li>a exclusão da sua conta e dos seus dados;</li>
+          <li>a portabilidade dos dados para outro serviço;</li>
+          <li>a informação de com quem os dados foram compartilhados;</li>
+          <li>a revisão, por uma pessoa, de uma decisão automática.</li>
+        </ul>
+        <p>Escreva para <a href="mailto:solicitaracesso67@gmail.com">solicitaracesso67@gmail.com</a> a partir do e-mail da sua conta, para confirmarmos que o pedido é seu. Respondemos em até 15 dias. Se não ficar satisfeito, você pode reclamar à <a href="https://www.gov.br/anpd">Autoridade Nacional de Proteção de Dados (ANPD)</a>.</p>
+      </section>
+
+      <section id="menores">
+        <h2>Menores de idade</h2>
+        <p>A ferramenta é feita para uso profissional e não é destinada a menores de 18 anos.</p>
+      </section>
+
+      <section id="mudancas">
+        <h2>Mudanças neste aviso</h2>
+        <p>Se a forma de tratar os dados mudar, este aviso é atualizado e a data no topo muda. O histórico completo fica no GitHub.</p>
+      </section>
+    </div>
+  </main>
+
+  <footer class="rodape">
+    <div class="moldura">
+      <p><a href="./">Central RTC</a>, código aberto. Este aviso descreve o funcionamento real da ferramenta e não substitui orientação jurídica.</p>
+    </div>
+  </footer>
+</body>
+</html>

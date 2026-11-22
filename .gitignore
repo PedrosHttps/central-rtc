@@ -6,5 +6,5 @@ danfse/
 .env
 CONVERSA-CLAUDE-AI.md
 painel/dados/
-revisao-pedidos.log
+revisao-pedidos*.log
 copias-contas/

@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Monitor · Central RTC</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect x='3' y='3' width='26' height='26' rx='3' fill='none' stroke='%235A2D82' stroke-width='3'/%3E%3Cpath d='M9 12h14M9 17h14M9 22h8' stroke='%2315253A' stroke-width='2.5'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="styles.css">
+  <link rel="modulepreload" href="lib/dom.js">
+  <script type="module" src="admin.js"></script>
+</head>
+<body>
+  <header class="topo">
+    <div class="marca">
+      <span class="marca-nome">Central RTC</span>
+      <span class="marca-sub">Monitor do administrador</span>
+    </div>
+    <div class="conta">
+      <span id="atualizado" class="conta-nome" aria-live="polite"></span>
+      <button type="button" id="btn-atualizar" class="botao botao-discreto">Atualizar</button>
+      <a class="botao botao-discreto" href="/">Voltar ao painel</a>
+    </div>
+  </header>
+
+  <main class="monitor">
+    <h1>Monitor</h1>
+    <p class="lead">Quem está usando o painel, todas as contas e as últimas tentativas de cadastro. A página se atualiza sozinha a cada 20 segundos.</p>
+    <div id="erro" class="mensagem mensagem-erro" role="alert" hidden></div>
+
+    <dl id="resumo" class="monitor-resumo"></dl>
+
+    <section>
+      <h2 class="titulo-bloco">Conectados</h2>
+      <p class="nota">Sessões abertas nas últimas 12 horas. "Online" é quem usou o painel nos últimos 5 minutos.</p>
+      <div id="conectados"></div>
+    </section>
+
+    <section>
+      <h2 class="titulo-bloco">Contas</h2>
+      <div id="contas"></div>
+    </section>
+
+    <section>
+      <h2 class="titulo-bloco">Tentativas de cadastro</h2>
+      <p class="nota">As 200 mais recentes, inclusive as que não viraram conta. Ficam só na memória: somem quando o painel reinicia.</p>
+      <div id="tentativas"></div>
+    </section>
+  </main>
+
+  <footer class="rodape">
+    Dados pessoais tratados conforme a LGPD (Lei 13.709/2018). Veja o <a href="https://pedroshttps.github.io/central-rtc/privacidade.html" target="_blank" rel="noopener">aviso de privacidade</a>.
+  </footer>
+</body>
+</html>

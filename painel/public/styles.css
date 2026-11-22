@@ -412,6 +412,18 @@ dl.chaves dd { overflow-wrap: anywhere; }
 /* ------------------------------------------------------------------ rodapé */
 
 .rodape { max-width: 78rem; margin: 0 auto; padding: 1.25rem clamp(1rem, 3vw, 2rem) 2.5rem; font-size: 0.875rem; color: var(--grafite); border-top: 1px solid var(--linha); }
+.rodape p { margin: 0 0 0.4rem; }
+.entrada-rodape { width: min(100%, 28rem); font-size: 0.8125rem; color: var(--grafite); margin: 1rem 0 0; }
+
+/* ------------------------------------------------------------------ monitor do administrador */
+
+.monitor { max-width: 78rem; margin: 0 auto; padding: 1.5rem clamp(1rem, 3vw, 2rem) 2rem; }
+.monitor h1 { font: 600 clamp(1.75rem, 3vw, 2.25rem)/1.1 var(--legenda); margin: 0 0 0.5rem; }
+.monitor section { margin-top: 2rem; }
+.monitor-resumo { display: grid; grid-template-columns: repeat(auto-fit, minmax(9.5rem, 1fr)); gap: 0.75rem; margin: 1.25rem 0 0; }
+.monitor-resumo div { background: var(--folha); border: 1.5px solid var(--tinta); border-radius: 3px; padding: 0.75rem 1rem; }
+.monitor-resumo dt { font: 500 0.875rem var(--legenda); color: var(--grafite); }
+.monitor-resumo dd { margin: 0.15rem 0 0; font: 700 1.875rem/1.1 var(--legenda); }
 
 /* ------------------------------------------------------------------ telas menores */
 
