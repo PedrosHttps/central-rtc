@@ -178,7 +178,9 @@ async function atualizarStatus() {
   }
   let status;
   try {
-    status = await (await fetch('/status', { cache: 'no-store' })).json();
+    const r = await fetch('/status', { cache: 'no-store' });
+    if (r.status === 401) return location.assign('/login.html'); // a sessão acabou
+    status = await r.json();
   } catch {
     $('#aviso-offline').hidden = false;
     $('#aviso-offline').textContent = 'O painel perdeu contato com o próprio servidor. Ele ainda está rodando?';
@@ -995,13 +997,199 @@ function tabelaLote(tipo, linhas) {
   );
 }
 
+// ============================================================================ conta: senha, usuários, sair
+
+async function api(caminho, { metodo = 'GET', corpo } = {}) {
+  const r = await fetch(caminho, {
+    method: metodo,
+    headers: corpo ? { 'content-type': 'application/json' } : {},
+    body: corpo ? JSON.stringify(corpo) : undefined,
+  });
+  const dados = await r.json().catch(() => ({}));
+  if (r.status === 401) location.assign('/login.html');
+  if (!r.ok) throw new Error(dados.mensagem || `O painel respondeu com erro ${r.status}.`);
+  return dados;
+}
+
+function senhaAleatoria() {
+  const letras = 'abcdefghijkmnpqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // sem 0/O, 1/l/I, que se confundem
+  return [...crypto.getRandomValues(new Uint32Array(16))].map((n) => letras[n % letras.length]).join('');
+}
+
+function abrirDialogo(titulo, conteudo, { obrigatorio = false } = {}) {
+  const d = h('dialog', { class: 'dialogo', 'aria-label': titulo },
+    h('div', { class: 'dialogo-topo' },
+      h('h2', { text: titulo }),
+      obrigatorio ? null : h('button', { type: 'button', class: 'botao botao-discreto', onclick: () => d.close() }, 'Fechar'),
+    ),
+    conteudo,
+  );
+  if (obrigatorio) d.addEventListener('cancel', (ev) => ev.preventDefault());
+  // Se o navegador fechar à força uma janela obrigatória, recarregar abre de novo.
+  d.addEventListener('close', () => (obrigatorio ? location.reload() : d.remove()));
+  document.body.append(d);
+  d.showModal();
+  return d;
+}
+
+const campoSenha = (rotulo, nome, autocomplete) =>
+  h('label', { class: 'campo campo-largo' }, h('span', { text: rotulo }), h('input', { type: 'password', name: nome, autocomplete, required: true }));
+
+function caixaMensagem() {
+  return h('div', { class: 'mensagem', role: 'status', hidden: true });
+}
+
+function mostrar(caixa, tom, ...conteudo) {
+  caixa.className = `mensagem mensagem-${tom}`;
+  trocar(caixa, ...conteudo);
+  caixa.hidden = false;
+}
+
+function dialogoTrocarSenha(obrigatorio) {
+  const msg = caixaMensagem();
+  const form = h('form', {},
+    obrigatorio ? h('p', { class: 'nota', text: 'Você entrou com uma senha provisória. Escolha uma senha sua para continuar.' }) : null,
+    h('div', { class: 'ficha' },
+      campoSenha('Senha atual', 'atual', 'current-password'),
+      campoSenha('Senha nova (12 caracteres ou mais)', 'nova', 'new-password'),
+      campoSenha('Repita a senha nova', 'repetida', 'new-password'),
+    ),
+    msg,
+    h('div', { class: 'acoes' }, h('button', { type: 'submit', class: 'botao botao-principal' }, 'Trocar senha')),
+  );
+  abrirDialogo('Trocar senha', form, { obrigatorio });
+  form.addEventListener('submit', async (ev) => {
+    ev.preventDefault();
+    const { atual, nova, repetida } = Object.fromEntries(new FormData(form));
+    msg.hidden = true;
+    try {
+      if (nova !== repetida) throw new Error('As duas senhas novas não estão iguais.');
+      await comBotaoOcupado(ev.submitter, () => api('/api/senha', { metodo: 'POST', corpo: { atual, nova } }));
+      if (obrigatorio) return location.reload();
+      form.replaceWith(h('p', { class: 'mensagem mensagem-ok', text: 'Senha trocada. Nos outros aparelhos você vai precisar entrar de novo.' }));
+    } catch (e) {
+      mostrar(msg, 'erro', e.message);
+    }
+  });
+}
+
+function dialogoUsuarios() {
+  const msg = caixaMensagem();
+  const lista = h('div', { class: 'tabela-rolagem' }, 'Carregando…');
+  const credenciais = (usuario, senha, texto) => [
+    h('strong', { text: texto }),
+    h('p', {}, 'Mande para a pessoa: usuário ', h('code', { text: usuario }), ' e senha provisória ', h('code', { text: senha }), '.'),
+    h('p', { text: 'No primeiro acesso o painel pede para ela trocar a senha.' }),
+  ];
+
+  async function carregar() {
+    const { admin, usuarios } = await api('/api/usuarios');
+    const botao = (texto, fn) => h('button', { type: 'button', class: 'botao botao-discreto', onclick: fn }, texto);
+    trocar(lista, h('table', { class: 'tabela' },
+      h('thead', {}, h('tr', {}, h('th', { text: 'Usuário' }), h('th', { text: 'Cadastro' }), h('th', { text: 'Situação' }), h('th', {}))),
+      h('tbody', {},
+        h('tr', {}, h('td', { text: admin }), h('td', { text: '—' }), h('td', { text: 'Administrador (senha no .env)' }), h('td', {})),
+        usuarios.map((u) => h('tr', {},
+          h('td', { text: u.usuario }),
+          h('td', { text: new Date(u.criadoEm).toLocaleDateString('pt-BR') }),
+          h('td', {}, carimbo(u.trocarSenha ? 'Senha provisória' : 'Ativo', u.trocarSenha ? 'aviso' : 'ok')),
+          h('td', { class: 'acoes-linha' },
+            botao('Nova senha', () => novaSenha(u.usuario)),
+            botao('Remover', () => remover(u.usuario)),
+          ),
+        )),
+      ),
+    ));
+  }
+
+  async function novaSenha(usuario) {
+    if (!confirm(`Gerar uma senha provisória nova para ${usuario}? A pessoa sai de todos os aparelhos.`)) return;
+    const senha = senhaAleatoria();
+    try {
+      await api(`/api/usuarios/${encodeURIComponent(usuario)}/senha`, { metodo: 'POST', corpo: { senha } });
+      mostrar(msg, 'ok', ...credenciais(usuario, senha, `Senha de ${usuario} trocada.`));
+      await carregar();
+    } catch (e) {
+      mostrar(msg, 'erro', e.message);
+    }
+  }
+
+  async function remover(usuario) {
+    if (!confirm(`Remover o acesso de ${usuario}? A pessoa sai na hora e não consegue mais entrar.`)) return;
+    try {
+      await api(`/api/usuarios/${encodeURIComponent(usuario)}`, { metodo: 'DELETE' });
+      mostrar(msg, 'ok', `Acesso de ${usuario} removido.`);
+      await carregar();
+    } catch (e) {
+      mostrar(msg, 'erro', e.message);
+    }
+  }
+
+  const form = h('form', {},
+    h('h3', { class: 'titulo-bloco', text: 'Cadastrar pessoa' }),
+    h('div', { class: 'ficha' },
+      h('label', { class: 'campo campo-largo' }, h('span', { text: 'Usuário (pode ser o e-mail da pessoa)' }),
+        h('input', { name: 'usuario', autocomplete: 'off', autocapitalize: 'none', spellcheck: 'false', required: true })),
+      h('label', { class: 'campo campo-largo' }, h('span', { text: 'Senha provisória' }),
+        h('input', { name: 'senha', autocomplete: 'off', spellcheck: 'false', required: true, value: senhaAleatoria() })),
+    ),
+    h('div', { class: 'acoes' },
+      h('button', { type: 'submit', class: 'botao botao-principal' }, 'Cadastrar'),
+      h('button', { type: 'button', class: 'botao botao-discreto', onclick: () => { form.elements.senha.value = senhaAleatoria(); } }, 'Gerar outra senha'),
+    ),
+  );
+  form.addEventListener('submit', async (ev) => {
+    ev.preventDefault();
+    const { usuario, senha } = Object.fromEntries(new FormData(form));
+    try {
+      const criado = await comBotaoOcupado(ev.submitter, () => api('/api/usuarios', { metodo: 'POST', corpo: { usuario, senha } }));
+      mostrar(msg, 'ok', ...credenciais(criado.usuario, senha, `Conta de ${criado.usuario} criada.`));
+      form.reset();
+      form.elements.senha.value = senhaAleatoria();
+      await carregar();
+    } catch (e) {
+      mostrar(msg, 'erro', e.message);
+    }
+  });
+
+  abrirDialogo('Usuários', h('div', {}, msg, lista, form));
+  carregar().catch((e) => mostrar(msg, 'erro', e.message));
+}
+
+async function iniciarConta() {
+  const eu = await api('/api/eu');
+  if (eu.aberto) return eu; // painel sem login (uso local)
+  const area = $('#conta');
+  trocar(area,
+    h('span', { class: 'conta-nome' }, 'Entrou como ', h('strong', { text: eu.usuario })),
+    eu.admin
+      ? h('button', { type: 'button', class: 'botao botao-discreto', onclick: dialogoUsuarios }, 'Usuários')
+      : h('button', { type: 'button', class: 'botao botao-discreto', onclick: () => dialogoTrocarSenha(false) }, 'Trocar senha'),
+    h('button', {
+      type: 'button',
+      class: 'botao botao-discreto',
+      onclick: async () => {
+        await api('/api/sair', { metodo: 'POST' }).catch(() => {});
+        location.assign('/login.html');
+      },
+    }, 'Sair'),
+  );
+  area.hidden = false;
+  if (eu.trocarSenha) dialogoTrocarSenha(true);
+  return eu;
+}
+
 // ============================================================================ início
 
 adicionarItemSN({ cAtivSN: '01', cClassTrib: '000001' });
 adicionarItemRG({ tipoCodigo: 'ncm', cst: '000', cClassTrib: '000001' });
 abrirSecao(location.hash.slice(1) || 'simples');
 window.addEventListener('hashchange', () => abrirSecao(location.hash.slice(1)));
-atualizarStatus().then(carregarAtividadesSN);
-setInterval(() => {
-  if (document.visibilityState === 'visible') atualizarStatus();
-}, 30000);
+const conta = await iniciarConta().catch(() => ({}));
+// Com senha provisória o servidor recusa as consultas; elas começam depois da troca.
+if (!conta.trocarSenha) {
+  atualizarStatus().then(carregarAtividadesSN);
+  setInterval(() => {
+    if (document.visibilityState === 'visible') atualizarStatus();
+  }, 30000);
+}

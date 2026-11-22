@@ -46,6 +46,10 @@ services:
       # Login do painel: defina no arquivo .env (fora do Git). Vazio = sem login, só para uso local.
       PAINEL_USUARIO: ${PAINEL_USUARIO:-}
       PAINEL_SENHA: ${PAINEL_SENHA:-}
+      # E-mail que aparece no botão "Pedir acesso" da tela de login.
+      PAINEL_EMAIL_ACESSO: ${PAINEL_EMAIL_ACESSO:-}
+    volumes:
+      - contas:/app/dados  # usuários cadastrados (só o hash das senhas)
     ports:
       - "127.0.0.1:3000:3000"
     depends_on:
@@ -53,3 +57,6 @@ services:
       - simples-nacional
       - danfse
     restart: unless-stopped
+
+volumes:
+  contas:

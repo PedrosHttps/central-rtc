@@ -448,3 +448,24 @@ dl.chaves dd { overflow-wrap: anywhere; }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation: none !important; transition: none !important; }
 }
+
+/* ------------------------------------------------------------------ login e conta */
+
+.pagina-entrada { display: grid; place-items: center; min-height: 100vh; padding: 1.5rem; }
+.entrada { width: min(100%, 28rem); background: var(--folha); border: 1.5px solid var(--tinta); border-radius: 3px; padding: 1.75rem clamp(1rem, 4vw, 2rem); }
+.entrada .marca { margin-bottom: 1.5rem; padding-bottom: 1rem; border-bottom: 2px solid var(--tinta); }
+.entrada h1 { font-size: 1.75rem; margin-bottom: 1rem; }
+.entrada .acoes { margin-bottom: 1rem; }
+
+.conta { display: flex; flex-wrap: wrap; align-items: center; gap: 0.25rem 0.5rem; font-size: 0.9375rem; }
+.conta-nome { color: var(--grafite); }
+.conta-nome strong { color: var(--tinta); font-weight: 600; }
+.conta .botao { padding: 0.35rem 0.5rem; }
+
+.dialogo { width: min(100% - 2rem, 44rem); max-height: calc(100vh - 2rem); border: 1.5px solid var(--tinta); border-radius: 3px; padding: 1.25rem clamp(1rem, 3vw, 1.75rem); background: var(--papel); color: var(--tinta); }
+.dialogo::backdrop { background: rgb(21 37 58 / 0.55); }
+.dialogo-topo { display: flex; justify-content: space-between; align-items: center; gap: 1rem; margin-bottom: 0.75rem; }
+.dialogo-topo h2 { font: 600 1.5rem/1.2 var(--legenda); margin: 0; }
+.dialogo .acoes { margin-bottom: 0.5rem; }
+.acoes-linha { white-space: nowrap; text-align: right; }
+.acoes-linha .botao { padding: 0.2rem 0.4rem; font-size: 0.9375rem; }

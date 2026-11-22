@@ -2,6 +2,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { spawn } from 'node:child_process';
+import { mkdtempSync, readFileSync, rmSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { lerCSV, gerarCSV } from '../public/lib/csv.js';
 import { decimal, numero, dataISO, dataHoraISO, decimalBR } from '../public/lib/formato.js';
@@ -138,39 +141,105 @@ test('leitura do resultado do regime geral (formato da documentação oficial)',
   assert.equal(it.vIBS, '0.48');
 });
 
-test('Painel: com PAINEL_USUARIO/PAINEL_SENHA, só entra com a senha certa e bloqueia quem erra demais', async (t) => {
-  const porta = 39517;
-  const env = { ...process.env, PORTA: String(porta), HOST: '127.0.0.1', PAINEL_USUARIO: 'ana', PAINEL_SENHA: 'senha-de-teste-123' };
+// Sobe o painel de verdade com login e uma pasta de dados temporária; devolve funções para fazer requisições.
+async function subirPainel(t, porta) {
+  const dados = mkdtempSync(path.join(tmpdir(), 'central-rtc-'));
+  const env = {
+    ...process.env, PORTA: String(porta), HOST: '127.0.0.1', PAINEL_DADOS: dados,
+    PAINEL_USUARIO: 'ana', PAINEL_SENHA: 'senha-de-teste-123', PAINEL_EMAIL_ACESSO: 'acesso@exemplo.com',
+  };
   const filho = spawn(process.execPath, [fileURLToPath(new URL('../server.js', import.meta.url))], { env });
-  t.after(() => filho.kill());
+  t.after(() => {
+    filho.kill();
+    rmSync(dados, { recursive: true, force: true });
+  });
   await new Promise((ok, falha) => {
     filho.stdout.on('data', (d) => String(d).includes('no ar') && ok());
     filho.on('exit', (c) => falha(new Error(`painel saiu com ${c}`)));
   });
-  const pedir = (senha, ip = '10.0.0.1') => fetch(`http://127.0.0.1:${porta}/status`, {
-    headers: {
-      'x-forwarded-for': ip,
-      ...(senha ? { authorization: `Basic ${Buffer.from(`ana:${senha}`).toString('base64')}` } : {}),
-    },
-  });
-  const sem = await pedir();
-  assert.equal(sem.status, 401);
-  assert.match(sem.headers.get('www-authenticate'), /^Basic/);
-  assert.match(sem.headers.get('content-security-policy'), /frame-ancestors 'none'/);
-  assert.equal((await pedir('errada')).status, 401);
-  assert.equal((await pedir('senha-de-teste-123')).status, 200);
+  const pedir = (caminho, { metodo = 'GET', corpo, sessao, ip = '10.0.0.1' } = {}) =>
+    fetch(`http://127.0.0.1:${porta}${caminho}`, {
+      method: metodo,
+      redirect: 'manual',
+      headers: {
+        'x-forwarded-for': ip,
+        ...(corpo ? { 'content-type': 'application/json' } : {}),
+        ...(sessao ? { cookie: `sessao=${sessao}` } : {}),
+      },
+      body: corpo ? JSON.stringify(corpo) : undefined,
+    });
+  const entrar = async (usuario, senha, ip) => {
+    const r = await pedir('/api/entrar', { metodo: 'POST', corpo: { usuario, senha }, ip });
+    return { status: r.status, sessao: /sessao=([\w-]+)/.exec(r.headers.get('set-cookie') || '')?.[1], dados: await r.json() };
+  };
+  return { pedir, entrar, dados };
+}
 
-  // 10 senhas erradas diferentes do mesmo IP bloqueiam esse IP (até com a senha certa); outro IP segue entrando.
-  for (let i = 0; i < 10; i++) assert.equal((await pedir(`errada-${i}`, '10.0.0.2')).status, 401);
-  assert.equal((await pedir('senha-de-teste-123', '10.0.0.2')).status, 429);
-  assert.equal((await pedir('senha-de-teste-123', '10.0.0.3')).status, 200);
+test('Painel: login, cadastro de usuários e troca da senha provisória', async (t) => {
+  const { pedir, entrar, dados } = await subirPainel(t, 39517);
 
-  // A mesma senha antiga repetida (aba aberta depois da troca de senha) não bloqueia.
-  for (let i = 0; i < 15; i++) assert.equal((await pedir('senha-antiga', '10.0.0.4')).status, 401);
-  assert.equal((await pedir('senha-de-teste-123', '10.0.0.4')).status, 200);
+  // Sem sessão: a página vai para o login, a API recusa, a tela de login e o e-mail de acesso são públicos.
+  const inicio = await pedir('/');
+  assert.equal(inicio.status, 302);
+  assert.equal(inicio.headers.get('location'), '/login.html');
+  assert.match(inicio.headers.get('content-security-policy'), /frame-ancestors 'none'/);
+  assert.equal((await pedir('/status')).status, 401);
+  assert.equal((await pedir('/svc/rg/versao')).status, 401);
+  assert.equal((await pedir('/login.html')).status, 200);
+  assert.deepEqual(await (await pedir('/api/acesso')).json(), { email: 'acesso@exemplo.com' });
+
+  assert.equal((await entrar('ana', 'errada')).status, 401);
+  assert.equal((await entrar('ninguem', 'senha-de-teste-123')).status, 401);
+  const admin = await entrar('ANA', 'senha-de-teste-123');
+  assert.equal(admin.status, 200);
+  assert.equal(admin.dados.admin, true);
+  assert.equal((await pedir('/status', { sessao: admin.sessao })).status, 200);
+
+  // O administrador cadastra; nome repetido, nome inválido e senha curta são recusados.
+  const cadastrar = (corpo) => pedir('/api/usuarios', { metodo: 'POST', corpo, sessao: admin.sessao });
+  assert.equal((await cadastrar({ usuario: 'maria@empresa.com', senha: 'provisoria-123' })).status, 201);
+  assert.equal((await cadastrar({ usuario: 'maria@empresa.com', senha: 'provisoria-456' })).status, 409);
+  assert.equal((await cadastrar({ usuario: 'joao', senha: 'curta' })).status, 400);
+  assert.equal((await cadastrar({ usuario: 'Nome Com Espaço', senha: 'provisoria-123' })).status, 400);
+  const arquivo = readFileSync(path.join(dados, 'usuarios.json'), 'utf8');
+  assert.match(arquivo, /maria@empresa\.com/);
+  assert.doesNotMatch(arquivo, /provisoria-123/); // só o hash fica gravado
+
+  // Com a senha provisória, a pessoa só consegue trocar a senha.
+  const maria = await entrar('maria@empresa.com', 'provisoria-123');
+  assert.equal(maria.dados.trocarSenha, true);
+  assert.equal((await pedir('/status', { sessao: maria.sessao })).status, 403);
+  const trocar = (corpo) => pedir('/api/senha', { metodo: 'POST', corpo, sessao: maria.sessao });
+  assert.equal((await trocar({ atual: 'errada-123456', nova: 'minha-senha-nova' })).status, 403);
+  assert.equal((await trocar({ atual: 'provisoria-123', nova: 'curta' })).status, 400);
+  assert.equal((await trocar({ atual: 'provisoria-123', nova: 'minha-senha-nova' })).status, 200);
+  assert.equal((await pedir('/status', { sessao: maria.sessao })).status, 200);
+  assert.equal((await entrar('maria@empresa.com', 'provisoria-123')).status, 401);
+
+  // Quem não é administrador não cadastra; removida, a pessoa sai na hora.
+  assert.equal((await pedir('/api/usuarios', { sessao: maria.sessao })).status, 403);
+  assert.equal((await pedir('/api/usuarios/maria%40empresa.com', { metodo: 'DELETE', sessao: admin.sessao })).status, 200);
+  assert.equal((await pedir('/status', { sessao: maria.sessao })).status, 401);
+
+  // Sair encerra a sessão.
+  assert.equal((await pedir('/api/sair', { metodo: 'POST', sessao: admin.sessao })).status, 200);
+  assert.equal((await pedir('/status', { sessao: admin.sessao })).status, 401);
+});
+
+test('Painel: bloqueia o endereço que erra a senha demais', async (t) => {
+  const { entrar } = await subirPainel(t, 39518);
+
+  // 10 senhas erradas diferentes bloqueiam o endereço (até com a senha certa); outro endereço segue entrando.
+  for (let i = 0; i < 10; i++) assert.equal((await entrar('ana', `errada-${i}`, '10.0.0.2')).status, 401);
+  assert.equal((await entrar('ana', 'senha-de-teste-123', '10.0.0.2')).status, 429);
+  assert.equal((await entrar('ana', 'senha-de-teste-123', '10.0.0.3')).status, 200);
+
+  // A mesma tentativa repetida não bloqueia.
+  for (let i = 0; i < 15; i++) assert.equal((await entrar('ana', 'senha-antiga', '10.0.0.4')).status, 401);
+  assert.equal((await entrar('ana', 'senha-de-teste-123', '10.0.0.4')).status, 200);
 
   // IPv6 conta pelo bloco /64: trocar de endereço dentro do bloco não escapa; outro bloco segue entrando.
-  for (let i = 1; i <= 10; i++) assert.equal((await pedir(`errada-${i}`, `2001:db8:1:2::${i}`)).status, 401);
-  assert.equal((await pedir('senha-de-teste-123', '2001:0db8:0001:0002:ffff::99')).status, 429);
-  assert.equal((await pedir('senha-de-teste-123', '2001:db8:1:3::1')).status, 200);
+  for (let i = 1; i <= 10; i++) assert.equal((await entrar('ana', `errada-${i}`, `2001:db8:1:2::${i}`)).status, 401);
+  assert.equal((await entrar('ana', 'senha-de-teste-123', '2001:0db8:0001:0002:ffff::99')).status, 429);
+  assert.equal((await entrar('ana', 'senha-de-teste-123', '2001:db8:1:3::1')).status, 200);
 });

@@ -10,7 +10,13 @@ Painel web + linha de comando que usam os três serviços de código aberto da R
 
 ## Estrutura
 
-- `painel/server.js` — servidor Node sem dependências: serve `public/`, repassa `/svc/rg|sn|danfse/*` para os serviços e expõe `/status`. Com `PAINEL_USUARIO` + `PAINEL_SENHA` (no Docker, via `.env`), toda rota exige login HTTP Basic, checado antes de qualquer outra coisa.
+- `painel/server.js` — servidor Node sem dependências: serve `public/`, repassa `/svc/rg|sn|danfse/*` para os serviços e expõe `/status`. Com `PAINEL_USUARIO` + `PAINEL_SENHA` (no Docker, via `.env`) liga o login: `controlarAcesso` roda antes de tudo. Ele faz o seguinte:
+  - Sessão em cookie `HttpOnly` + `SameSite=Strict`, guardada só na memória.
+  - Contas em `PAINEL_DADOS/usuarios.json`, com scrypt; a escrita é atômica.
+  - O administrador é a conta do `.env`; as rotas `/api/usuarios` são só dele.
+  - Senha provisória obriga a trocar em `/api/senha` antes de qualquer consulta.
+  - Bloqueio por IP depois de 10 senhas erradas diferentes. O IP vem do último item do `X-Forwarded-For`, e o IPv6 conta pelo bloco /64.
+  - Públicos: `login.html`, `login.js`, `styles.css`, `fontes/`, `/api/acesso` e `/api/entrar`.
 - `painel/cli.js` — comandos `status`, `modelo`, `lote`, `danfse`. Códigos de saída: 0 ok, 1 uso/serviço fora, 2 algum item falhou.
 - `painel/public/lib/` — **código compartilhado entre navegador e Node** (ESM puro): `rtc.js` (cliente, montagem das operações, leitura dos resultados, lote), `csv.js`, `formato.js`, `zip.js`. Não use APIs exclusivas do Node aqui.
 - `painel/public/app.js` + `index.html` + `styles.css` — interface, JS puro, sem build.

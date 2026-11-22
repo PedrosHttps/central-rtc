@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Entrar · Central RTC</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect x='3' y='3' width='26' height='26' rx='3' fill='none' stroke='%235A2D82' stroke-width='3'/%3E%3Cpath d='M9 12h14M9 17h14M9 22h8' stroke='%2315253A' stroke-width='2.5'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="styles.css">
+  <script type="module" src="login.js"></script>
+</head>
+<body class="pagina-entrada">
+  <main class="entrada">
+    <div class="marca">
+      <span class="marca-nome">Central RTC</span>
+      <span class="marca-sub">Calculadoras da reforma tributária e DANFSe, num lugar só</span>
+    </div>
+
+    <form id="form-entrar" novalidate>
+      <h1>Entrar</h1>
+      <div class="ficha">
+        <label class="campo campo-largo"><span>Usuário</span>
+          <input name="usuario" autocomplete="username" autocapitalize="none" spellcheck="false" required>
+        </label>
+        <label class="campo campo-largo"><span>Senha</span>
+          <input name="senha" type="password" autocomplete="current-password" required>
+        </label>
+      </div>
+      <div id="erro-entrar" class="mensagem mensagem-erro" role="alert" hidden></div>
+      <div class="acoes">
+        <button type="submit" class="botao botao-principal">Entrar</button>
+      </div>
+    </form>
+
+    <p id="pedir-acesso" class="nota" hidden>
+      Ainda não tem acesso? <a id="link-pedir-acesso" href="#">Pedir acesso por e-mail</a>.
+      O administrador cria sua conta e responde com o usuário e uma senha provisória.
+    </p>
+  </main>
+</body>
+</html>
