@@ -31,7 +31,7 @@ Painel web + linha de comando que usam os três serviços de código aberto da R
 - `docker/java.Dockerfile` — constrói as duas calculadoras Java a partir do GitHub; gera o banco SQLite uma vez com o Flyway do regime regular e copia para as duas imagens.
 - `docker-compose.yml` — sobe os 3 serviços + painel, portas presas a 127.0.0.1.
 - `servicos-windows.ps1` — alternativa sem Docker: clona, compila e sobe os 3 serviços no Windows (Java 25 + Go 1.27). Salvo em UTF-8 **com BOM**, senão o PowerShell 5.1 quebra os acentos.
-- `docs/` — GitHub Pages: `index.html` (página do projeto, com o endereço online) e `guia.html` (guia de uso para quem não é da área contábil), com estilo comum em `estilo.css`, imagens e fontes.
+- `docs/` — GitHub Pages: `index.html` (página do projeto, com o endereço online), `guia.html` (guia de uso para quem não é da área contábil) e `guia-central-rtc.pdf` (o mesmo guia em PDF, gerado pelo `@media print` de `estilo.css` com o Chromium headless; gere de novo quando mudar o guia), com estilo comum em `estilo.css`, imagens e fontes.
 
 ## Comandos
 
@@ -49,7 +49,7 @@ Com os serviços reais: `docker compose up -d --build` na raiz.
 
 - Sem dependências npm. Node 22+.
 - Textos da interface em português, voz ativa, tom natural; botões dizem exatamente o que fazem.
-- Identidade visual: campos como células de formulário fiscal (`.ficha` / `.campo`), estado dos itens como carimbo (`.carimbo` com `data-tom` ok/erro/aviso/neutro). Cores e fontes (Barlow, Barlow Semi Condensed, locais em `public/fontes/`) estão em variáveis no topo de `styles.css`.
+- Identidade visual com as cores da Rede NAF: azul-marinho `#1a2a66` (texto, botões, topo) e verde-limão `#d7ee02` (`--destaque`, só fundo e realce, nunca texto em fundo claro). Não use o logo do NAF/Receita: a ferramenta não é oficial. Campos como células de formulário fiscal (`.ficha` / `.campo`), estado dos itens como carimbo (`.carimbo` com `data-tom` ok/erro/aviso/neutro). Cores e fontes (Barlow, Barlow Semi Condensed, locais em `public/fontes/`) estão em variáveis no topo de `styles.css`.
 - Use `trocar(el, ...filhos)` em vez de `replaceChildren` quando houver filhos condicionais (evita "null" na tela).
 
 ## Contratos das APIs que importam

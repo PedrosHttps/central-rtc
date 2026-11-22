@@ -7,15 +7,17 @@
 @font-face { font-family: 'Barlow Semi Condensed'; font-weight: 600; font-display: swap; src: url('fontes/barlow-semi-condensed-latin-600-normal.woff2') format('woff2'); }
 @font-face { font-family: 'Barlow Semi Condensed'; font-weight: 700; font-display: swap; src: url('fontes/barlow-semi-condensed-latin-700-normal.woff2') format('woff2'); }
 
+/* Cores da Rede NAF (Receita Federal): azul-marinho e verde-limão. O limão é só fundo e destaque, nunca cor de texto em fundo claro. */
 :root {
-  --papel: #eef1f0;
+  --papel: #f2f4f9;
   --folha: #ffffff;
-  --tinta: #15253a;
-  --grafite: #56626f;
-  --linha: #c7ced5;
-  --carimbo: #5a2d82;
-  --carimbo-escuro: #45206a;
-  --carimbo-claro: #f1eaf7;
+  --tinta: #1a2a66;
+  --grafite: #4d5675;
+  --linha: #c8cee0;
+  --carimbo: #1a2a66;
+  --carimbo-escuro: #0f1a47;
+  --carimbo-claro: #f3f9c4;
+  --destaque: #d7ee02;
   --ok: #1f6e4a;
   --texto: 'Barlow', 'Segoe UI', system-ui, sans-serif;
   --legenda: 'Barlow Semi Condensed', 'Arial Narrow', 'Segoe UI', system-ui, sans-serif;
@@ -34,12 +36,13 @@ code { font-family: var(--codigo); font-size: 0.875em; background: var(--folha);
 .moldura { max-width: var(--largura); margin: 0 auto; padding: 0 clamp(1.1rem, 4vw, 2.5rem); }
 
 /* topo */
-.topo { background: var(--folha); border-bottom: 2px solid var(--tinta); }
+.topo { background: var(--tinta); border-bottom: 5px solid var(--destaque); }
 .topo .moldura { display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding-top: 0.9rem; padding-bottom: 0.9rem; }
-.marca { font: 700 1.375rem/1 var(--legenda); color: var(--tinta); text-decoration: none; letter-spacing: -0.01em; }
+.marca { font: 700 1.375rem/1 var(--legenda); color: #fff; text-decoration: none; letter-spacing: -0.01em; }
 .topo nav { display: flex; gap: 1.5rem; font: 500 1rem var(--legenda); }
-.topo nav a { color: var(--tinta); text-decoration: none; }
-.topo nav a:hover { color: var(--carimbo); text-decoration: underline; }
+.topo nav a { color: #fff; text-decoration: none; }
+.topo nav a:hover { color: var(--destaque); text-decoration: underline; }
+.topo :focus-visible { outline-color: var(--destaque); }
 @media (max-width: 40rem) { .topo nav .opcional { display: none; } }
 
 /* abertura */
@@ -66,10 +69,10 @@ h1 { font: 600 clamp(2.25rem, 5.2vw, 3.6rem)/1.04 var(--legenda); letter-spacing
 .botao { display: inline-block; font: 600 1.0625rem/1.2 var(--legenda); padding: 0.75rem 1.3rem; border: 1.5px solid var(--tinta); border-radius: 3px; background: var(--folha); color: var(--tinta); text-decoration: none; }
 .botao:hover { background: #e5e9ec; }
 .botao-principal { background: var(--carimbo); border-color: var(--carimbo); color: #fff; }
-.botao-principal:hover { background: var(--carimbo-escuro); }
+.botao-principal:hover { background: var(--destaque); border-color: var(--destaque); color: var(--tinta); }
 .vitrine { position: relative; }
-.vitrine .tela { border: 1.5px solid var(--tinta); border-radius: 4px; background: var(--folha); padding: 0.75rem; box-shadow: 0.6rem 0.6rem 0 var(--carimbo-claro); }
-.vitrine .celular { position: absolute; width: 27%; right: -1.25rem; bottom: -2.5rem; border: 1.5px solid var(--tinta); border-radius: 14px; overflow: hidden; background: var(--folha); box-shadow: 0.4rem 0.4rem 0 var(--carimbo-claro); }
+.vitrine .tela { border: 1.5px solid var(--tinta); border-radius: 4px; background: var(--folha); padding: 0.75rem; box-shadow: 0.6rem 0.6rem 0 var(--destaque); }
+.vitrine .celular { position: absolute; width: 27%; right: -1.25rem; bottom: -2.5rem; border: 1.5px solid var(--tinta); border-radius: 14px; overflow: hidden; background: var(--folha); box-shadow: 0.4rem 0.4rem 0 var(--destaque); }
 @media (max-width: 56rem) {
   .abertura .moldura { grid-template-columns: minmax(0, 1fr); }
   .vitrine .celular { display: none; }
@@ -127,7 +130,7 @@ section h2 { max-width: 26ch; }
 
 .numeros { background: var(--tinta); color: #fff; padding: clamp(1.5rem, 4vw, 2.25rem) 0; }
 .numeros dl { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 1.5rem; margin: 0; }
-.numeros dt { font: 700 clamp(1.75rem, 3.6vw, 2.5rem)/1 var(--legenda); letter-spacing: -0.01em; margin-bottom: 0.35rem; }
+.numeros dt { color: var(--destaque); font: 700 clamp(1.75rem, 3.6vw, 2.5rem)/1 var(--legenda); letter-spacing: -0.01em; margin-bottom: 0.35rem; }
 .numeros dd { margin: 0; color: #c9d3dd; font-size: 0.9375rem; line-height: 1.4; }
 @media (max-width: 48rem) { .numeros dl { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 
@@ -135,20 +138,20 @@ section h2 { max-width: 26ch; }
 .lado { background: var(--folha); border: 1.5px solid var(--linha); border-radius: 4px; padding: 1.25rem 1.4rem; }
 .lado ul { margin: 0; padding-left: 1.2rem; color: var(--grafite); }
 .lado li { margin: 0.35rem 0; }
-.lado-solucao { border-color: var(--carimbo); box-shadow: 0.5rem 0.5rem 0 var(--carimbo-claro); }
+.lado-solucao { border-color: var(--carimbo); box-shadow: 0.5rem 0.5rem 0 var(--destaque); }
 .lado-solucao h3 { color: var(--carimbo); }
 .lado-solucao ul { color: var(--tinta); }
 @media (max-width: 44rem) { .comparacao { grid-template-columns: minmax(0, 1fr); } }
 
 .publico { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1rem; margin: 1.5rem 0 1.25rem; }
-.publico article { border-top: 3px solid var(--carimbo); background: var(--folha); padding: 1.1rem 1.25rem 1.25rem; border-radius: 0 0 4px 4px; }
+.publico article { border-top: 4px solid var(--destaque); background: var(--folha); padding: 1.1rem 1.25rem 1.25rem; border-radius: 0 0 4px 4px; }
 .publico p { margin: 0; color: var(--grafite); }
 @media (max-width: 52rem) { .publico { grid-template-columns: minmax(0, 1fr); } }
 
 .linha-tempo { list-style: none; margin: 0 0 1.25rem; padding: 0; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 0; border-top: 2px solid var(--tinta); }
 .linha-tempo li { position: relative; padding: 1.25rem 1.25rem 0 0; }
 .linha-tempo li::before { content: ""; position: absolute; top: -0.5rem; left: 0; width: 0.85rem; height: 0.85rem; border-radius: 50%; background: var(--papel); border: 2px solid var(--carimbo); }
-.linha-tempo li:first-child::before { background: var(--carimbo); }
+.linha-tempo li:first-child::before { background: var(--destaque); }
 .linha-tempo strong { display: block; font: 700 1.375rem/1.1 var(--legenda); margin-bottom: 0.35rem; }
 .linha-tempo p { margin: 0; color: var(--grafite); font-size: 1rem; }
 @media (max-width: 48rem) {
@@ -169,7 +172,7 @@ section h2 { max-width: 26ch; }
 .caminho { background: var(--folha); border: 1.5px solid var(--tinta); border-radius: 4px; padding: 1.25rem 1.4rem 1.4rem; display: grid; gap: 0.75rem; min-width: 0; }
 .caminho > * { margin: 0; }
 .caminho .rotulo { font: 600 0.875rem var(--legenda); color: var(--grafite); }
-.caminho-principal { border-color: var(--carimbo); box-shadow: 0.5rem 0.5rem 0 var(--carimbo-claro); }
+.caminho-principal { border-color: var(--carimbo); box-shadow: 0.5rem 0.5rem 0 var(--destaque); }
 .caminho-principal .rotulo { color: var(--carimbo); }
 .caminho .passos { gap: 0.6rem; }
 .caminho .passos li { grid-template-columns: 1.6rem minmax(0, 1fr); }
@@ -189,6 +192,22 @@ section h2 { max-width: 26ch; }
 
 .rodape { background: var(--folha); border-top: 2px solid var(--tinta); padding: 2rem 0 2.5rem; font-size: 0.9375rem; color: var(--grafite); }
 .rodape p { margin: 0 0 0.5rem; max-width: 75ch; }
+
+/* impressão: o guia em PDF sai daqui (docs/guia-central-rtc.pdf) */
+@media print {
+  @page { size: A4; margin: 14mm 14mm 16mm; }
+  html { scroll-behavior: auto; }
+  body { font-size: 10pt; background: #fff; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .topo nav, .so-tela { display: none; }
+  .carimbo { animation: none; }
+  .guia-abertura { padding-top: 1.25rem; }
+  .guia section { padding: 0.9rem 0; }
+  h2, h3 { break-after: avoid; }
+  .ficha, .destaque, .dica, .sumario, .passos li, .tabela-guia tr, dl.perguntas dd { break-inside: avoid; }
+  a { text-decoration: none; }
+  .rodape { padding: 0.75rem 0 0; font-size: 0.85rem; }
+  .guia { padding-bottom: 0; }
+}
 
 /* guia de uso */
 .guia { padding-bottom: 2rem; }

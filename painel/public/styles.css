@@ -8,16 +8,18 @@
 @font-face { font-family: 'Barlow Semi Condensed'; font-weight: 600; font-display: swap; src: url('fontes/barlow-semi-condensed-latin-600-normal.woff2') format('woff2'); }
 @font-face { font-family: 'Barlow Semi Condensed'; font-weight: 700; font-display: swap; src: url('fontes/barlow-semi-condensed-latin-700-normal.woff2') format('woff2'); }
 
+/* Cores da Rede NAF (Receita Federal): azul-marinho e verde-limão. O limão é só fundo e destaque, nunca cor de texto em fundo claro. */
 :root {
-  --papel: #eef1f0;
+  --papel: #f2f4f9;
   --folha: #ffffff;
-  --tinta: #15253a;
-  --grafite: #56626f;
-  --linha: #c7ced5;
-  --sombra-campo: #f6f8f9;
-  --carimbo: #5a2d82;
-  --carimbo-escuro: #45206a;
-  --carimbo-claro: #f1eaf7;
+  --tinta: #1a2a66;
+  --grafite: #4d5675;
+  --linha: #c8cee0;
+  --sombra-campo: #f6f7fb;
+  --carimbo: #1a2a66;
+  --carimbo-escuro: #0f1a47;
+  --carimbo-claro: #f3f9c4;
+  --destaque: #d7ee02;
   --ok: #1f6e4a;
   --ok-claro: #e6f2ea;
   --erro: #a3312b;
@@ -61,9 +63,19 @@ code { font-family: var(--codigo); font-size: 0.875em; background: var(--folha);
   justify-content: space-between;
   gap: 0.75rem 2rem;
   padding: 0.9rem clamp(1rem, 3vw, 2rem);
-  background: var(--folha);
-  border-bottom: 2px solid var(--tinta);
+  background: var(--tinta);
+  color: #fff;
+  border-bottom: 5px solid var(--destaque);
 }
+.topo .marca-sub, .topo .servicos-lista small, .topo .conta-nome { color: #c5cce4; }
+.topo .conta-nome strong { color: #fff; }
+.topo .botao-discreto { color: #fff; }
+.topo .botao-discreto:hover:not(:disabled) { color: var(--destaque); }
+.topo :focus-visible { outline-color: var(--destaque); }
+/* No fundo azul, o verde e o vermelho escuros dos serviços sumiriam. */
+.topo .servicos-lista li::before { background: #8d97b8; }
+.topo .servicos-lista li[data-estado='online']::before { background: #5fe08f; }
+.topo .servicos-lista li[data-estado='offline']::before { background: #ff7a70; }
 
 .marca { display: flex; flex-direction: column; }
 .marca-nome { font: 700 1.5rem/1.1 var(--legenda); letter-spacing: -0.01em; }
@@ -113,7 +125,7 @@ code { font-family: var(--codigo); font-size: 0.875em; background: var(--folha);
   cursor: pointer;
 }
 .menu button:hover { color: var(--tinta); }
-.menu button[aria-current='page'] { color: var(--tinta); font-weight: 600; border-left-color: var(--carimbo); background: var(--folha); }
+.menu button[aria-current='page'] { color: var(--tinta); font-weight: 600; border-left-color: var(--carimbo); background: var(--carimbo-claro); }
 
 main { min-width: 0; }
 
@@ -255,7 +267,7 @@ fieldset.campo > legend + * { clear: both; }
 }
 .botao:hover:not(:disabled) { background: #e5e9ec; }
 .botao-principal { background: var(--carimbo); border-color: var(--carimbo); color: #fff; }
-.botao-principal:hover:not(:disabled) { background: var(--carimbo-escuro); }
+.botao-principal:hover:not(:disabled) { background: var(--destaque); border-color: var(--destaque); color: var(--tinta); }
 .botao-discreto { border-color: transparent; background: transparent; text-decoration: underline; text-underline-offset: 3px; }
 .botao-discreto:hover:not(:disabled) { background: transparent; color: var(--carimbo); }
 .botao:disabled { opacity: 0.45; cursor: not-allowed; }
@@ -462,8 +474,8 @@ dl.chaves dd { overflow-wrap: anywhere; }
 
 /* ------------------------------------------------------------------ login e conta */
 
-.pagina-entrada { display: grid; place-items: center; min-height: 100vh; padding: 1.5rem; }
-.entrada { width: min(100%, 28rem); background: var(--folha); border: 1.5px solid var(--tinta); border-radius: 3px; padding: 1.75rem clamp(1rem, 4vw, 2rem); }
+.pagina-entrada { display: grid; place-items: center; min-height: 100vh; padding: 1.5rem; background: var(--tinta); }
+.entrada { width: min(100%, 28rem); background: var(--folha); border: 1.5px solid var(--tinta); border-top: 0.45rem solid var(--destaque); border-radius: 3px; padding: 1.75rem clamp(1rem, 4vw, 2rem); box-shadow: 0.6rem 0.6rem 0 var(--destaque); }
 .entrada .marca { margin-bottom: 1.5rem; padding-bottom: 1rem; border-bottom: 2px solid var(--tinta); }
 .entrada h1 { font-size: 1.75rem; margin-bottom: 1rem; }
 .entrada .acoes { margin-bottom: 1rem; }

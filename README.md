@@ -12,7 +12,7 @@
 **Disponível online: [central-rtc.taild4c7a5.ts.net](https://central-rtc.taild4c7a5.ts.net)** (peça uma conta na tela de entrada)
 
 [Página do projeto](https://pedroshttps.github.io/central-rtc/) ·
-[Guia de uso](https://pedroshttps.github.io/central-rtc/guia.html) ·
+[Guia de uso](https://pedroshttps.github.io/central-rtc/guia.html) ([PDF](https://pedroshttps.github.io/central-rtc/guia-central-rtc.pdf)) ·
 [Instalar](#como-rodar-com-docker) ·
 [Linha de comando](#linha-de-comando) ·
 [Planilhas](#planilhas-do-lote)
