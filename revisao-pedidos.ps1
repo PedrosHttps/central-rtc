@@ -19,7 +19,8 @@ $base = 'http://localhost:3000/api'
 
 if ($Acao -eq 'listar') {
   $resposta = Invoke-RestMethod -Uri "$base/pedidos" -Headers $cabecalhos
-  ConvertTo-Json -InputObject @($resposta.pedidos) -Depth 3
+  # No PowerShell 5.1 a lista vazia sai como "[\r\n\r\n]", e o vigia a confundiria com pedido novo.
+  if (@($resposta.pedidos).Count -eq 0) { '[]' } else { ConvertTo-Json -InputObject @($resposta.pedidos) -Depth 3 }
   exit 0
 }
 

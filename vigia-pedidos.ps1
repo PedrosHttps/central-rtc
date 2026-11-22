@@ -28,6 +28,7 @@ if (-not (PodeAnalisar @() $t0) -or (PodeAnalisar @(1..10 | ForEach-Object { $t0
     -not (PodeAnalisar @(1..10 | ForEach-Object { $t0.AddMinutes(-60 - $_) }) $t0)) { throw 'PodeAnalisar está errada' }
 
 Set-Location $pasta
+[Console]::OutputEncoding = [Text.Encoding]::UTF8  # a saída do claude é UTF-8; sem isso os acentos quebram no log
 Registrar 'vigia iniciado'
 $jaAnalisada = '[]'
 $analises = @()
