@@ -1,6 +1,8 @@
-// Testes das bibliotecas compartilhadas (rodam sem os serviços): npm run teste
+// Testes das bibliotecas compartilhadas e do login do painel (rodam sem os serviços): npm run teste
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { spawn } from 'node:child_process';
+import { fileURLToPath } from 'node:url';
 import { lerCSV, gerarCSV } from '../public/lib/csv.js';
 import { decimal, numero, dataISO, dataHoraISO, decimalBR } from '../public/lib/formato.js';
 import { criarZip, crc32, nomeUnico } from '../public/lib/zip.js';
@@ -134,4 +136,23 @@ test('leitura do resultado do regime geral (formato da documentação oficial)',
   assert.equal(it.pAliqEfetCBS, '3.52');
   assert.equal(it.pRedIBSUF, '60.00');
   assert.equal(it.vIBS, '0.48');
+});
+
+test('Painel: com PAINEL_USUARIO/PAINEL_SENHA, só entra com a senha certa', async (t) => {
+  const porta = 39517;
+  const env = { ...process.env, PORTA: String(porta), HOST: '127.0.0.1', PAINEL_USUARIO: 'ana', PAINEL_SENHA: 'senha-de-teste-123' };
+  const filho = spawn(process.execPath, [fileURLToPath(new URL('../server.js', import.meta.url))], { env });
+  t.after(() => filho.kill());
+  await new Promise((ok, falha) => {
+    filho.stdout.on('data', (d) => String(d).includes('no ar') && ok());
+    filho.on('exit', (c) => falha(new Error(`painel saiu com ${c}`)));
+  });
+  const pedir = (senha) => fetch(`http://127.0.0.1:${porta}/status`, {
+    headers: senha ? { authorization: `Basic ${Buffer.from(`ana:${senha}`).toString('base64')}` } : {},
+  });
+  const sem = await pedir();
+  assert.equal(sem.status, 401);
+  assert.match(sem.headers.get('www-authenticate'), /^Basic/);
+  assert.equal((await pedir('errada')).status, 401);
+  assert.equal((await pedir('senha-de-teste-123')).status, 200);
 });

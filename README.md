@@ -126,6 +126,7 @@ No Windows, use o Agendador de Tarefas com o programa `node` e os argumentos `cl
 | `DANFSE_URL` | `http://localhost:8081` | Gerador de DANFSe |
 | `PORTA` | `3000` | Porta do painel |
 | `HOST` | `127.0.0.1` | Interface do painel (`0.0.0.0` só dentro do Docker) |
+| `PAINEL_USUARIO` e `PAINEL_SENHA` | vazias (sem login) | Pedem usuário e senha para abrir o painel. Obrigatórias antes de deixar o painel acessível por outros aparelhos. A senha precisa ter 12 caracteres ou mais. No Docker, coloque as duas no arquivo `.env` da raiz, que fica fora do Git. |
 
 ## Planilhas do lote
 

@@ -43,6 +43,9 @@ services:
       RG_URL: http://regime-geral:8080/api
       SN_URL: http://simples-nacional:8082/api
       DANFSE_URL: http://danfse:8080
+      # Login do painel: defina no arquivo .env (fora do Git). Vazio = sem login, só para uso local.
+      PAINEL_USUARIO: ${PAINEL_USUARIO:-}
+      PAINEL_SENHA: ${PAINEL_SENHA:-}
     ports:
       - "127.0.0.1:3000:3000"
     depends_on:

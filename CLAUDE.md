@@ -10,7 +10,7 @@ Painel web + linha de comando que usam os três serviços de código aberto da R
 
 ## Estrutura
 
-- `painel/server.js` — servidor Node sem dependências: serve `public/`, repassa `/svc/rg|sn|danfse/*` para os serviços e expõe `/status`.
+- `painel/server.js` — servidor Node sem dependências: serve `public/`, repassa `/svc/rg|sn|danfse/*` para os serviços e expõe `/status`. Com `PAINEL_USUARIO` + `PAINEL_SENHA` (no Docker, via `.env`), toda rota exige login HTTP Basic, checado antes de qualquer outra coisa.
 - `painel/cli.js` — comandos `status`, `modelo`, `lote`, `danfse`. Códigos de saída: 0 ok, 1 uso/serviço fora, 2 algum item falhou.
 - `painel/public/lib/` — **código compartilhado entre navegador e Node** (ESM puro): `rtc.js` (cliente, montagem das operações, leitura dos resultados, lote), `csv.js`, `formato.js`, `zip.js`. Não use APIs exclusivas do Node aqui.
 - `painel/public/app.js` + `index.html` + `styles.css` — interface, JS puro, sem build.
