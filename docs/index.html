@@ -3,147 +3,21 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Central RTC — calculadoras da reforma tributária e DANFSe num painel só</title>
-  <meta name="description" content="Painel e linha de comando de código aberto que junta as calculadoras de CBS, IBS e Imposto Seletivo da Receita Federal (regime geral e Simples Nacional) e o gerador de DANFSe.">
+  <title>Central RTC — calculadoras da reforma tributária e DANFSe num painel só, online</title>
+  <meta name="description" content="Disponível online. Painel e linha de comando de código aberto que junta as calculadoras de CBS, IBS e Imposto Seletivo da Receita Federal (regime geral e Simples Nacional) e o gerador de DANFSe.">
   <meta property="og:title" content="Central RTC">
   <meta property="og:description" content="As calculadoras da reforma tributária e o gerador de DANFSe da Receita Federal num painel só, com processamento em lote.">
   <meta property="og:image" content="img/simples-resultado.png">
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect x='3' y='3' width='26' height='26' rx='3' fill='none' stroke='%235A2D82' stroke-width='3'/%3E%3Cpath d='M9 12h14M9 17h14M9 22h8' stroke='%2315253A' stroke-width='2.5'/%3E%3C/svg%3E">
-  <style>
-    @font-face { font-family: 'Barlow'; font-weight: 400; font-display: swap; src: url('fontes/barlow-latin-400-normal.woff2') format('woff2'); }
-    @font-face { font-family: 'Barlow'; font-weight: 500; font-display: swap; src: url('fontes/barlow-latin-500-normal.woff2') format('woff2'); }
-    @font-face { font-family: 'Barlow'; font-weight: 600; font-display: swap; src: url('fontes/barlow-latin-600-normal.woff2') format('woff2'); }
-    @font-face { font-family: 'Barlow Semi Condensed'; font-weight: 500; font-display: swap; src: url('fontes/barlow-semi-condensed-latin-500-normal.woff2') format('woff2'); }
-    @font-face { font-family: 'Barlow Semi Condensed'; font-weight: 600; font-display: swap; src: url('fontes/barlow-semi-condensed-latin-600-normal.woff2') format('woff2'); }
-    @font-face { font-family: 'Barlow Semi Condensed'; font-weight: 700; font-display: swap; src: url('fontes/barlow-semi-condensed-latin-700-normal.woff2') format('woff2'); }
-
-    :root {
-      --papel: #eef1f0;
-      --folha: #ffffff;
-      --tinta: #15253a;
-      --grafite: #56626f;
-      --linha: #c7ced5;
-      --carimbo: #5a2d82;
-      --carimbo-escuro: #45206a;
-      --carimbo-claro: #f1eaf7;
-      --ok: #1f6e4a;
-      --texto: 'Barlow', 'Segoe UI', system-ui, sans-serif;
-      --legenda: 'Barlow Semi Condensed', 'Arial Narrow', 'Segoe UI', system-ui, sans-serif;
-      --codigo: ui-monospace, 'Cascadia Mono', Consolas, Menlo, monospace;
-      --largura: 72rem;
-    }
-    *, *::before, *::after { box-sizing: border-box; }
-    html { -webkit-text-size-adjust: 100%; scroll-behavior: smooth; }
-    @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } * { animation: none !important; } }
-    body { margin: 0; background: var(--papel); color: var(--tinta); font: 400 1.0625rem/1.6 var(--texto); }
-    a { color: var(--carimbo); text-underline-offset: 3px; }
-    :focus-visible { outline: 2px solid var(--carimbo); outline-offset: 3px; }
-    img { max-width: 100%; height: auto; display: block; }
-    code { font-family: var(--codigo); font-size: 0.875em; background: var(--folha); border: 1px solid var(--linha); border-radius: 2px; padding: 0.05em 0.3em; }
-
-    .moldura { max-width: var(--largura); margin: 0 auto; padding: 0 clamp(1.1rem, 4vw, 2.5rem); }
-
-    /* topo */
-    .topo { background: var(--folha); border-bottom: 2px solid var(--tinta); }
-    .topo .moldura { display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding-top: 0.9rem; padding-bottom: 0.9rem; }
-    .marca { font: 700 1.375rem/1 var(--legenda); color: var(--tinta); text-decoration: none; letter-spacing: -0.01em; }
-    .topo nav { display: flex; gap: 1.5rem; font: 500 1rem var(--legenda); }
-    .topo nav a { color: var(--tinta); text-decoration: none; }
-    .topo nav a:hover { color: var(--carimbo); text-decoration: underline; }
-    @media (max-width: 40rem) { .topo nav .opcional { display: none; } }
-
-    /* abertura */
-    .abertura { padding: clamp(2.5rem, 7vw, 5rem) 0 clamp(2.5rem, 6vw, 4rem); }
-    .abertura .moldura { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr); gap: clamp(2rem, 5vw, 4rem); align-items: center; }
-    .carimbo {
-      display: inline-block;
-      font: 700 0.9375rem/1.1 var(--legenda);
-      letter-spacing: 0.03em;
-      color: var(--carimbo);
-      padding: 0.3rem 0.7rem;
-      border: 2px solid currentColor;
-      border-radius: 3px;
-      outline: 1px solid currentColor;
-      outline-offset: 3px;
-      transform: rotate(-3deg);
-      margin-bottom: 1.5rem;
-      animation: carimbar 0.35s 0.25s ease-out both;
-    }
-    @keyframes carimbar { from { transform: rotate(-3deg) scale(1.6); opacity: 0; } to { transform: rotate(-3deg) scale(1); opacity: 1; } }
-    h1 { font: 600 clamp(2.25rem, 5.2vw, 3.6rem)/1.04 var(--legenda); letter-spacing: -0.02em; margin: 0 0 1.25rem; max-width: 16ch; }
-    .lead { font-size: 1.1875rem; color: var(--grafite); margin: 0 0 2rem; max-width: 40ch; }
-    .acoes { display: flex; flex-wrap: wrap; gap: 0.75rem; }
-    .botao { display: inline-block; font: 600 1.0625rem/1.2 var(--legenda); padding: 0.75rem 1.3rem; border: 1.5px solid var(--tinta); border-radius: 3px; background: var(--folha); color: var(--tinta); text-decoration: none; }
-    .botao:hover { background: #e5e9ec; }
-    .botao-principal { background: var(--carimbo); border-color: var(--carimbo); color: #fff; }
-    .botao-principal:hover { background: var(--carimbo-escuro); }
-    .vitrine { position: relative; }
-    .vitrine .tela { border: 1.5px solid var(--tinta); border-radius: 4px; background: var(--folha); padding: 0.75rem; box-shadow: 0.6rem 0.6rem 0 var(--carimbo-claro); }
-    .vitrine .celular { position: absolute; width: 27%; right: -1.25rem; bottom: -2.5rem; border: 1.5px solid var(--tinta); border-radius: 14px; overflow: hidden; background: var(--folha); box-shadow: 0.4rem 0.4rem 0 var(--carimbo-claro); }
-    @media (max-width: 56rem) {
-      .abertura .moldura { grid-template-columns: minmax(0, 1fr); }
-      .vitrine .celular { display: none; }
-    }
-
-    /* seções */
-    section { padding: clamp(2.5rem, 6vw, 4.5rem) 0; }
-    section + section { border-top: 1px solid var(--linha); }
-    h2 { font: 600 clamp(1.75rem, 3.4vw, 2.4rem)/1.1 var(--legenda); letter-spacing: -0.015em; margin: 0 0 0.75rem; }
-    h3 { font: 600 1.3125rem/1.2 var(--legenda); margin: 0 0 0.4rem; }
-    .intro { color: var(--grafite); max-width: 60ch; margin: 0 0 2rem; }
-    .nota { font-size: 0.9375rem; color: var(--grafite); }
-
-    /* ficha: o que faz (mesma linguagem visual do painel) */
-    .ficha { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1px; background: var(--linha); border: 1.5px solid var(--tinta); border-radius: 4px; overflow: hidden; }
-    @media (max-width: 60rem) { .ficha { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
-    @media (max-width: 38rem) { .ficha { grid-template-columns: minmax(0, 1fr); } }
-    .campo { background: var(--folha); padding: 1.1rem 1.25rem 1.3rem; }
-    .campo .rotulo { display: block; font: 500 0.875rem var(--legenda); color: var(--grafite); margin-bottom: 0.2rem; }
-    .campo strong { display: block; font: 600 1.3125rem/1.25 var(--legenda); margin-bottom: 0.45rem; }
-    .campo p { margin: 0; font-size: 1rem; color: var(--tinta); }
-
-    /* galeria */
-    .galeria { display: grid; gap: clamp(2.5rem, 5vw, 4rem); }
-    .peca { display: grid; grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.4fr); gap: clamp(1.5rem, 4vw, 3rem); align-items: start; }
-    .peca:nth-child(even) { grid-template-columns: minmax(0, 1.4fr) minmax(0, 0.8fr); }
-    .peca:nth-child(even) .texto { order: 2; }
-    .peca .texto p { margin: 0 0 0.75rem; color: var(--grafite); }
-    .peca figure { margin: 0; border: 1.5px solid var(--tinta); border-radius: 4px; background: var(--folha); padding: 0.6rem; }
-    @media (max-width: 52rem) {
-      .peca, .peca:nth-child(even) { grid-template-columns: minmax(0, 1fr); }
-      .peca:nth-child(even) .texto { order: 0; }
-    }
-
-    /* passos */
-    .passos { list-style: none; counter-reset: passo; margin: 0; padding: 0; display: grid; gap: 1.25rem; max-width: 52rem; }
-    .passos li { counter-increment: passo; display: grid; grid-template-columns: 2.5rem minmax(0, 1fr); gap: 0.25rem 0.75rem; }
-    .passos li::before { content: counter(passo); font: 700 1.625rem/1.2 var(--legenda); color: var(--carimbo); grid-row: span 2; }
-    .passos p { margin: 0; }
-    pre { margin: 0.5rem 0 0; background: var(--tinta); color: #e8edf2; border-radius: 4px; padding: 0.9rem 1.1rem; overflow-x: auto; font: 0.9rem/1.65 var(--codigo); }
-    pre .c { color: #9fb0c2; }
-
-    /* arquitetura */
-    .mapa { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1.4fr); gap: 1rem; align-items: center; max-width: 56rem; }
-    .caixa { background: var(--folha); border: 1.5px solid var(--tinta); border-radius: 4px; padding: 0.9rem 1.1rem; }
-    .caixa .rotulo { display: block; font: 500 0.875rem var(--legenda); color: var(--grafite); }
-    .caixa strong { font: 600 1.1875rem var(--legenda); }
-    .servicos { display: grid; gap: 0.6rem; }
-    .seta { font: 600 1.75rem var(--legenda); color: var(--carimbo); }
-    @media (max-width: 44rem) { .mapa { grid-template-columns: minmax(0, 1fr); } .seta { transform: rotate(90deg); justify-self: center; } }
-
-    .avisos { display: grid; gap: 1rem; grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr)); }
-    .aviso { border-left: 3px solid var(--carimbo); padding: 0.2rem 0 0.2rem 1rem; }
-    .aviso p { margin: 0; color: var(--grafite); font-size: 1rem; }
-
-    .rodape { background: var(--folha); border-top: 2px solid var(--tinta); padding: 2rem 0 2.5rem; font-size: 0.9375rem; color: var(--grafite); }
-    .rodape p { margin: 0 0 0.5rem; max-width: 75ch; }
-  </style>
+  <link rel="stylesheet" href="estilo.css">
 </head>
 <body>
   <header class="topo">
     <div class="moldura">
       <a class="marca" href="#">Central RTC</a>
       <nav aria-label="Navegação">
+        <a href="#usar-online">Usar online</a>
+        <a href="guia.html">Guia de uso</a>
         <a class="opcional" href="#o-que-faz">O que faz</a>
         <a class="opcional" href="#instalar">Instalar</a>
         <a href="https://github.com/PedrosHttps/central-rtc">GitHub</a>
@@ -155,12 +29,13 @@
     <div class="abertura">
       <div class="moldura">
         <div>
-          <span class="carimbo">Código aberto</span>
+          <span class="carimbo">Disponível online</span>
           <h1>As calculadoras da reforma tributária num painel só</h1>
-          <p class="lead">CBS, IBS e Imposto Seletivo do regime geral e do Simples Nacional, mais o gerador de DANFSe, usando os serviços oficiais da Receita Federal no seu computador. Um item por vez ou uma planilha inteira.</p>
+          <p class="lead">CBS, IBS e Imposto Seletivo do regime geral e do Simples Nacional, mais o gerador de DANFSe, usando os serviços oficiais da Receita Federal. Use direto no navegador, do computador ou do celular, sem instalar nada. Um item por vez ou uma planilha inteira.</p>
           <div class="acoes">
-            <a class="botao botao-principal" href="#instalar">Instalar em 3 passos</a>
-            <a class="botao" href="https://github.com/PedrosHttps/central-rtc">Ver o código</a>
+            <a class="botao botao-principal" href="https://central-rtc.taild4c7a5.ts.net">Usar online</a>
+            <a class="botao" href="guia.html">Guia de uso</a>
+            <a class="botao" href="#instalar">Instalar no seu computador</a>
           </div>
         </div>
         <div class="vitrine">
@@ -169,6 +44,19 @@
         </div>
       </div>
     </div>
+
+    <section id="usar-online">
+      <div class="moldura">
+        <h2>Use online</h2>
+        <p class="intro">A Central RTC está no ar em <a href="https://central-rtc.taild4c7a5.ts.net"><strong>central-rtc.taild4c7a5.ts.net</strong></a>. Funciona no navegador do computador e do celular. Para entrar, peça uma conta. Cada pedido passa por uma análise rápida, para manter a ferramenta longe de robôs e spam.</p>
+        <ol class="passos">
+          <li><p><strong>Abra o endereço</strong> e toque em <em>Criar conta</em>. Se preferir, use <em>Criar conta com Google</em>: o nome e o e-mail já vêm preenchidos e você não precisa de senha.</p></li>
+          <li><p><strong>Conte para que vai usar a ferramenta.</strong> Uma frase basta, por exemplo: "conferir o IBS e a CBS das notas da minha loja".</p></li>
+          <li><p><strong>Aguarde a aprovação.</strong> Os pedidos são analisados de hora em hora. Depois disso, entre com o e-mail e a senha que você escolheu, ou com o Google.</p></li>
+        </ol>
+        <p class="nota">Nunca mexeu com tributos? O <a href="guia.html">guia de uso</a> explica cada tela e cada termo em linguagem simples. O acesso online roda num servidor do próprio projeto e pode ficar fora do ar de vez em quando. Se precisar dele o tempo todo, instale no seu computador.</p>
+      </div>
+    </section>
 
     <section id="o-que-faz">
       <div class="moldura">
@@ -225,8 +113,8 @@
 
     <section id="instalar">
       <div class="moldura">
-        <h2>Instalar</h2>
-        <p class="intro">Você precisa do Docker Desktop (Windows e macOS) ou do Docker com Compose (Linux). Ele baixa o código oficial da Receita, compila e gera o banco de dados.</p>
+        <h2>Instalar no seu computador</h2>
+        <p class="intro">Não é preciso instalar nada para <a href="#usar-online">usar online</a>. Instalar só faz sentido se você quiser a ferramenta inteira na sua máquina. Para isso, você precisa do Docker Desktop (Windows e macOS) ou do Docker com Compose (Linux). Ele baixa o código oficial da Receita, compila e gera o banco de dados.</p>
         <ol class="passos">
           <li>
             <p>Baixe o projeto.</p>

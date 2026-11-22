@@ -1205,6 +1205,7 @@ async function iniciarConta() {
     eu.admin
       ? h('button', { type: 'button', class: 'botao botao-discreto', onclick: dialogoUsuarios }, 'Usuários')
       : eu.google ? null : h('button', { type: 'button', class: 'botao botao-discreto', onclick: () => dialogoTrocarSenha(false) }, 'Trocar senha'),
+    h('a', { class: 'botao botao-discreto', href: 'https://pedroshttps.github.io/central-rtc/guia.html', target: '_blank', rel: 'noopener' }, 'Guia'),
     h('button', {
       type: 'button',
       class: 'botao botao-discreto',

@@ -32,7 +32,7 @@ Painel web + linha de comando que usam os três serviços de código aberto da R
 - `docker/java.Dockerfile` — constrói as duas calculadoras Java a partir do GitHub; gera o banco SQLite uma vez com o Flyway do regime regular e copia para as duas imagens.
 - `docker-compose.yml` — sobe os 3 serviços + painel, portas presas a 127.0.0.1.
 - `servicos-windows.ps1` — alternativa sem Docker: clona, compila e sobe os 3 serviços no Windows (Java 25 + Go 1.27). Salvo em UTF-8 **com BOM**, senão o PowerShell 5.1 quebra os acentos.
-- `docs/` — página do GitHub Pages (HTML único + imagens + fontes).
+- `docs/` — GitHub Pages: `index.html` (página do projeto, com o endereço online) e `guia.html` (guia de uso para quem não é da área contábil), com estilo comum em `estilo.css`, imagens e fontes.
 
 ## Comandos
 

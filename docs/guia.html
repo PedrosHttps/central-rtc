@@ -1,0 +1,225 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Guia de uso — Central RTC</title>
+  <meta name="description" content="Como usar a Central RTC sem ser da área contábil: o que é a reforma tributária, qual tela usar, passo a passo e glossário dos termos.">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect x='3' y='3' width='26' height='26' rx='3' fill='none' stroke='%235A2D82' stroke-width='3'/%3E%3Cpath d='M9 12h14M9 17h14M9 22h8' stroke='%2315253A' stroke-width='2.5'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="estilo.css">
+</head>
+<body>
+  <header class="topo">
+    <div class="moldura">
+      <a class="marca" href="./">Central RTC</a>
+      <nav aria-label="Navegação">
+        <a href="https://central-rtc.taild4c7a5.ts.net">Usar online</a>
+        <a class="opcional" href="./">Página do projeto</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="guia">
+    <div class="moldura">
+      <div class="guia-abertura">
+        <span class="carimbo">Guia de uso</span>
+        <h1>Como usar a Central RTC sem ser contador</h1>
+        <p class="lead">Este guia explica cada tela em linguagem simples. Se aparecer uma palavra estranha, procure no <a href="#glossario">glossário</a> no fim da página.</p>
+      </div>
+
+      <nav class="sumario" aria-label="Neste guia">
+        <strong>Neste guia</strong>
+        <ol>
+          <li><a href="#antes">Antes de começar</a></li>
+          <li><a href="#reforma">A reforma tributária em 1 minuto</a></li>
+          <li><a href="#entrar">Entrar na ferramenta</a></li>
+          <li><a href="#qual-tela">Qual tela usar</a></li>
+          <li><a href="#simples">Simples Nacional, passo a passo</a></li>
+          <li><a href="#regime-geral">Regime geral, passo a passo</a></li>
+          <li><a href="#consultas">Consultas</a></li>
+          <li><a href="#danfse">DANFSe: o PDF da nota de serviço</a></li>
+          <li><a href="#lote">Muitos itens de uma vez (planilha)</a></li>
+          <li><a href="#resultados">Como ler os resultados</a></li>
+          <li><a href="#problemas">Problemas comuns</a></li>
+          <li><a href="#glossario">Glossário</a></li>
+        </ol>
+      </nav>
+
+      <section id="antes">
+        <h2>Antes de começar</h2>
+        <p>A Central RTC é uma tela única para as <strong>calculadoras oficiais da Receita Federal</strong> da reforma tributária. Você informa o que vendeu, e ela mostra quanto de imposto novo incide em cada item. Ela também transforma o arquivo de uma nota de serviço (XML) no PDF que dá para imprimir ou mandar ao cliente (DANFSe).</p>
+        <div class="destaque">
+          <p><strong>O que ela não faz:</strong> não emite nota fiscal, não paga imposto e não substitui o seu contador. Os números vêm das calculadoras da Receita, mas dependem do que você digita. Use a ferramenta para entender, conferir e simular. Antes de levar um valor para um documento oficial, confirme com quem cuida da contabilidade da empresa.</p>
+        </div>
+      </section>
+
+      <section id="reforma">
+        <h2>A reforma tributária em 1 minuto</h2>
+        <p>A reforma troca vários impostos sobre o consumo por três novos:</p>
+        <div class="ficha">
+          <div class="campo"><span class="rotulo">Federal</span><strong>CBS</strong><p>Contribuição sobre Bens e Serviços. Substitui o PIS e a Cofins.</p></div>
+          <div class="campo"><span class="rotulo">Estados e municípios</span><strong>IBS</strong><p>Imposto sobre Bens e Serviços. Substitui o ICMS (estadual) e o ISS (municipal). Por isso aparece dividido em "estadual" e "municipal".</p></div>
+          <div class="campo"><span class="rotulo">Só alguns produtos</span><strong>Imposto Seletivo (IS)</strong><p>Cobrado de produtos que fazem mal à saúde ou ao meio ambiente, como cigarro e bebida alcoólica. A maioria dos itens não tem IS.</p></div>
+        </div>
+        <p class="nota">A troca é gradual. Os novos impostos começam com alíquotas de teste em 2026, a CBS passa a valer por inteiro em 2027, e o IBS cresce aos poucos até 2033. Por isso a <strong>data</strong> que você informa muda o resultado.</p>
+      </section>
+
+      <section id="entrar">
+        <h2>Entrar na ferramenta</h2>
+        <ol class="passos">
+          <li><p><strong>Peça uma conta.</strong> Abra <a href="https://central-rtc.taild4c7a5.ts.net">central-rtc.taild4c7a5.ts.net</a> e toque em <em>Criar conta</em>. Informe nome, e-mail, empresa e, em uma frase, para que vai usar a ferramenta. Escolha uma senha de pelo menos 12 caracteres. Se preferir, use <em>Criar conta com Google</em>: o nome e o e-mail vêm da sua conta Google e você não precisa de senha.</p></li>
+          <li><p><strong>Aguarde a análise.</strong> Os pedidos são analisados de hora em hora. Se você tentar entrar antes, a tela avisa que o pedido está em análise.</p></li>
+          <li><p><strong>Entre.</strong> Use o e-mail e a senha, ou o botão <em>Entrar com Google</em>. No topo aparecem o seu nome, <em>Trocar senha</em> e <em>Sair</em>.</p></li>
+        </ol>
+        <p class="nota">Esqueceu a senha? Use o link <em>Escreva para o administrador</em> na tela de entrada e peça uma senha provisória. Depois de 10 senhas erradas seguidas, o acesso desse endereço fica bloqueado por 15 minutos.</p>
+        <p>As <strong>bolinhas no topo</strong> mostram se as três calculadoras estão funcionando. Verde quer dizer no ar. Vermelha quer dizer fora do ar: espere um pouco e toque em <em>Verificar de novo</em>.</p>
+      </section>
+
+      <section id="qual-tela">
+        <h2>Qual tela usar</h2>
+        <div class="tabela-guia" role="region" aria-label="Qual tela usar" tabindex="0">
+          <table>
+            <thead><tr><th>Você quer…</th><th>Use a tela</th></tr></thead>
+            <tbody>
+              <tr><td>Calcular o imposto de uma venda de empresa do <strong>Simples Nacional</strong> (a maioria das pequenas empresas, incluindo MEI)</td><td data-rotulo="Use a tela: "><a href="#simples">Simples Nacional</a></td></tr>
+              <tr><td>Calcular o imposto de uma venda de empresa de <strong>Lucro Presumido ou Lucro Real</strong></td><td data-rotulo="Use a tela: "><a href="#regime-geral">Regime geral</a></td></tr>
+              <tr><td>Descobrir um código (de produto, de serviço, de classificação) ou entender uma mensagem de erro</td><td data-rotulo="Use a tela: "><a href="#consultas">Consultas</a></td></tr>
+              <tr><td>Transformar o XML de uma nota de serviço (NFS-e) em PDF</td><td data-rotulo="Use a tela: "><a href="#danfse">DANFSe</a></td></tr>
+              <tr><td>Calcular dezenas ou centenas de itens de uma vez</td><td data-rotulo="Use a tela: "><a href="#lote">Em lote</a></td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="nota">Não sabe o regime da empresa? Ele aparece no cartão CNPJ e é a primeira coisa que o contador sabe responder.</p>
+      </section>
+
+      <section id="simples">
+        <h2>Simples Nacional, passo a passo</h2>
+        <p class="dica"><strong>Dica:</strong> toque em <em>Preencher exemplo</em> e depois em <em>Calcular</em>. Ver um cálculo pronto é o jeito mais rápido de entender a tela.</p>
+        <ol class="passos">
+          <li><p><strong>Dados da operação.</strong> <em>Data do fato gerador</em> é a data da venda. Em <em>Documento</em>, escolha o tipo de nota: NF-e para produtos, NFC-e para venda no balcão ao consumidor, NFS-e para serviços. Em <em>Regime tributário (CRT)</em>, deixe <em>1 — Simples Nacional</em>, ou escolha <em>4 — MEI</em>. Os outros campos podem ficar como estão.</p></li>
+          <li><p><strong>Atividade (cAtivSN).</strong> Escolha o tipo de atividade do item, por exemplo "Revenda de mercadorias". Se não souber qual serve, use a aba <em>Atividades e anexos</em>: marque os anexos do Simples da empresa e veja quais atividades valem.</p></li>
+          <li><p><strong>cClassTrib.</strong> É o código que diz como o item é tributado. Na dúvida, <code>000001</code> quer dizer "tributação normal, sem desconto".</p></li>
+          <li><p><strong>Base de cálculo (R$).</strong> É o valor do item na nota.</p></li>
+          <li><p><strong>Alíquota IBS (%) e Alíquota CBS (%).</strong> São os percentuais efetivos da sua empresa no Simples. Eles saem da apuração mensal, então peça ao contador ou veja no PGDAS. Sem esses números o cálculo não fica certo para a sua empresa.</p></li>
+          <li><p><strong>Imposto Seletivo (R$).</strong> Deixe 0, a menos que o produto seja dos que pagam IS.</p></li>
+          <li><p>Toque em <em>Calcular</em>. Cada item ganha um carimbo e os valores de IBS e CBS. <a href="#resultados">Veja como ler</a>.</p></li>
+        </ol>
+        <p class="nota">Item sem atividade escolhida volta como <em>Não calculado</em>. Isso não é erro: é a regra do Simples.</p>
+      </section>
+
+      <section id="regime-geral">
+        <h2>Regime geral, passo a passo</h2>
+        <p class="dica"><strong>Dica:</strong> aqui também há <em>Preencher exemplo</em>. Comece por ele.</p>
+        <ol class="passos">
+          <li><p><strong>Data e hora do fato gerador:</strong> quando a venda aconteceu. <strong>Município (código IBGE)</strong> e <strong>UF:</strong> de onde a venda é feita. O código IBGE tem 7 números. Procure "código IBGE" mais o nome da cidade. São Paulo, por exemplo, é <code>3550308</code>.</p></li>
+          <li><p><strong>Tipo do item:</strong> produto usa <strong>NCM</strong> (código de 8 números que fica na nota de compra ou no cadastro do produto). Serviço usa <strong>NBS</strong>. Se não souber o código, use a tela <a href="#consultas">Consultas</a>.</p></li>
+          <li><p><strong>CST e cClassTrib:</strong> dizem como o item é tributado. Para um item comum, sem benefício, use CST <code>000</code> e cClassTrib <code>000001</code>.</p></li>
+          <li><p><strong>Base de cálculo, quantidade e unidade:</strong> o valor do item, quantas unidades e a unidade (UN, KG, L…).</p></li>
+          <li><p><strong>A partir de 2027:</strong> o painel pede as alíquotas de <strong>CBS</strong>, <strong>IBS estadual</strong> e <strong>IBS municipal</strong>, e o resultado sai como <em>Cálculo simulado</em>. Antes de 2027 esses campos somem, porque a calculadora usa as alíquotas de teste.</p></li>
+          <li><p>Toque em <em>Calcular</em>. Cada item mostra a base, a CBS e o IBS, a redução (se houver) e a alíquota efetiva. A <em>memória de cálculo</em> mostra a conta feita.</p></li>
+        </ol>
+        <p class="nota">Ainda nesta tela, <em>Gerar e validar XML</em> monta o trecho de tributação da nota no formato oficial. É útil para quem desenvolve ou testa sistemas de emissão. Quem só quer saber o valor pode ignorar.</p>
+      </section>
+
+      <section id="consultas">
+        <h2>Consultas</h2>
+        <p>Escolha em <em>O que consultar</em>, preencha a data e toque em <em>Consultar</em>. Dá para:</p>
+        <ul>
+          <li>descobrir o <strong>cClassTrib</strong> certo para uma situação;</li>
+          <li>confirmar o <strong>NCM</strong> de um produto ou o <strong>NBS</strong> de um serviço;</li>
+          <li>ver as <strong>alíquotas de referência</strong> da União, do estado e do município;</li>
+          <li>entender uma mensagem de erro: cole o código, por exemplo <code>REG-004</code> ou <code>VSN-021</code>, em <em>Código de erro</em>.</li>
+        </ul>
+      </section>
+
+      <section id="danfse">
+        <h2>DANFSe: o PDF da nota de serviço</h2>
+        <p>Quem emite nota de serviço eletrônica (NFS-e) recebe um arquivo <strong>XML</strong>, que é o que vale juridicamente. O <strong>DANFSe</strong> é a versão em PDF desse arquivo, para imprimir ou mandar ao cliente.</p>
+        <ol class="passos">
+          <li><p>Arraste os arquivos XML para a área tracejada, ou toque nela para escolher. Pode ser um arquivo ou vários.</p></li>
+          <li><p>Em <em>Situação da nota</em>, deixe <em>Válida</em>. Escolha <em>Cancelada</em> ou <em>Substituída</em> só quando a nota estiver nessa situação: o PDF sai com a marca correspondente. Desmarque <em>Canhoto</em> se não quiser o recibo destacável.</p></li>
+          <li><p>Toque em <em>Gerar PDFs</em>. Cada arquivo mostra <em>Ver</em> e <em>Baixar</em>. Use <em>Baixar todos (.zip)</em> para levar tudo de uma vez.</p></li>
+        </ol>
+        <p class="nota">Use só XMLs de notas já autorizadas, devolvidos pelo sistema da prefeitura ou pelo emissor. Arquivo com problema aparece com o motivo e não atrapalha os outros.</p>
+      </section>
+
+      <section id="lote">
+        <h2>Muitos itens de uma vez (planilha)</h2>
+        <ol class="passos">
+          <li><p>Na tela <em>Em lote</em>, escolha o <em>Tipo de cálculo</em> (Simples Nacional ou regime geral) e toque em <em>Baixar planilha modelo</em>.</p></li>
+          <li><p>Abra no Excel. Cada linha é um item. Linhas com o mesmo valor na coluna <code>operacao</code> são da mesma nota. Valores podem usar vírgula (<code>1.234,56</code>) e datas no formato <code>15/03/2027</code>.</p></li>
+          <li><p>Salve como <strong>CSV</strong> (no Excel: <em>Salvar como → CSV UTF-8</em>), escolha o arquivo em <em>Planilha (.csv)</em> e toque em <em>Processar planilha</em>.</p></li>
+          <li><p>Antes de processar, o painel aponta colunas faltando ou dados diferentes dentro da mesma nota. No fim, baixe o resultado: ele abre direto no Excel, com a coluna <code>linhaPlanilha</code> dizendo de que linha veio cada item.</p></li>
+        </ol>
+      </section>
+
+      <section id="resultados">
+        <h2>Como ler os resultados</h2>
+        <p>Cada item recebe um carimbo:</p>
+        <div class="tabela-guia" role="region" aria-label="Carimbos do resultado" tabindex="0">
+          <table>
+            <thead><tr><th>Carimbo</th><th>O que quer dizer</th><th>O que fazer</th></tr></thead>
+            <tbody>
+              <tr><td><span class="selo selo-ok">Calculado</span></td><td data-rotulo="O que quer dizer: ">A calculadora da Receita fez a conta.</td><td data-rotulo="O que fazer: ">Nada. Confira os valores.</td></tr>
+              <tr><td><span class="selo selo-ok">Cálculo simulado</span></td><td data-rotulo="O que quer dizer: ">Conta feita com as alíquotas que você informou (a partir de 2027, no regime geral).</td><td data-rotulo="O que fazer: ">Confirme se as alíquotas digitadas estão certas.</td></tr>
+              <tr><td><span class="selo selo-aviso">Não calculado</span></td><td data-rotulo="O que quer dizer: ">Pela regra, esse item não tem cálculo. No Simples, costuma ser item sem atividade ou com atividade que não vale para aquele documento.</td><td data-rotulo="O que fazer: ">Veja a atividade escolhida e o documento.</td></tr>
+              <tr><td><span class="selo selo-erro">Inconsistência na entrada</span></td><td data-rotulo="O que quer dizer: ">Algum dado não fecha, por exemplo um código que não existe na data.</td><td data-rotulo="O que fazer: ">Leia a mensagem ao lado: ela diz o campo e traz um código (REG-… ou VSN-…) que você pode pesquisar em <a href="#consultas">Consultas</a>.</td></tr>
+              <tr><td><span class="selo selo-erro">Falha técnica</span> ou <span class="selo selo-erro">Operação recusada</span></td><td data-rotulo="O que quer dizer: ">A calculadora não conseguiu responder ou recusou a nota inteira.</td><td data-rotulo="O que fazer: ">Confira as bolinhas do topo e tente de novo. Se continuar, avise o administrador.</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p>Nos valores: <strong>base de cálculo</strong> é o valor sobre o qual o imposto incide. <strong>Alíquota</strong> é o percentual. <strong>Alíquota efetiva</strong> é o percentual que sobra depois de descontos (reduções) previstos em lei. O <strong>total</strong> soma os impostos da nota.</p>
+      </section>
+
+      <section id="problemas">
+        <h2>Problemas comuns</h2>
+        <dl class="perguntas">
+          <dt>"Seu pedido de acesso ainda está em análise"</dt>
+          <dd>Os pedidos são vistos de hora em hora. Tente de novo mais tarde.</dd>
+          <dt>"Sua sessão acabou. Entre de novo."</dt>
+          <dd>Por segurança, a sessão dura 12 horas e termina se a senha for trocada ou o painel for reiniciado. É só entrar de novo.</dd>
+          <dt>"Muitas senhas erradas"</dt>
+          <dd>Espere 15 minutos. Se esqueceu a senha, peça uma provisória ao administrador.</dd>
+          <dt>Bolinha vermelha no topo, ou o site não abre</dt>
+          <dd>A ferramenta roda num servidor do projeto, que às vezes fica desligado ou reiniciando. Espere alguns minutos e tente de novo.</dd>
+          <dt>O valor não bate com o que o contador calculou</dt>
+          <dd>Confira a data, o regime, o cClassTrib e as alíquotas digitadas. No Simples, as alíquotas da empresa mudam todo mês. Se continuar diferente, vale a versão do contador. Leve a memória de cálculo para ele olhar.</dd>
+        </dl>
+      </section>
+
+      <section id="glossario">
+        <h2>Glossário</h2>
+        <dl class="glossario">
+          <dt>Alíquota</dt><dd>Percentual do imposto. 10% de alíquota sobre R$ 100 dá R$ 10.</dd>
+          <dt>Base de cálculo</dt><dd>Valor sobre o qual o percentual é aplicado. Normalmente, o valor do item.</dd>
+          <dt>cAtivSN</dt><dd>Código da atividade no Simples Nacional, como revenda de mercadorias ou prestação de serviço.</dd>
+          <dt>CBS</dt><dd>Contribuição sobre Bens e Serviços, o imposto federal novo, que substitui PIS e Cofins.</dd>
+          <dt>cClassTrib</dt><dd>Código de classificação tributária: diz se o item tem tributação normal, redução, isenção etc. <code>000001</code> é a tributação normal.</dd>
+          <dt>CRT</dt><dd>Código de regime tributário da empresa: Simples Nacional, MEI ou regime normal.</dd>
+          <dt>CST</dt><dd>Código de situação tributária. Anda junto com o cClassTrib. <code>000</code> é a tributação normal.</dd>
+          <dt>DANFSe</dt><dd>PDF de uma nota fiscal de serviço eletrônica (NFS-e), para imprimir ou enviar.</dd>
+          <dt>Fato gerador</dt><dd>O momento que faz o imposto existir. Na prática, a data da venda ou do serviço.</dd>
+          <dt>IBS</dt><dd>Imposto sobre Bens e Serviços, dos estados e municípios, que substitui ICMS e ISS. Aparece como IBS estadual e IBS municipal.</dd>
+          <dt>IBGE (código do município)</dt><dd>Número de 7 dígitos que identifica cada cidade do Brasil.</dd>
+          <dt>Imposto Seletivo (IS)</dt><dd>Imposto extra sobre produtos prejudiciais à saúde ou ao meio ambiente.</dd>
+          <dt>Lucro Presumido / Lucro Real</dt><dd>Regimes das empresas que não estão no Simples. Na Central RTC, use a tela Regime geral.</dd>
+          <dt>MEI</dt><dd>Microempreendedor individual, a menor forma de empresa. Usa a tela Simples Nacional, com CRT 4.</dd>
+          <dt>NBS</dt><dd>Código que identifica um tipo de serviço.</dd>
+          <dt>NCM</dt><dd>Código de 8 números que identifica um tipo de mercadoria.</dd>
+          <dt>NF-e, NFC-e, NFS-e</dt><dd>Notas fiscais eletrônicas: de produto, de venda ao consumidor no balcão, e de serviço.</dd>
+          <dt>Redução</dt><dd>Desconto no imposto previsto em lei para certos produtos e serviços, como alimentos da cesta básica e saúde.</dd>
+          <dt>Simples Nacional</dt><dd>Regime simplificado das micro e pequenas empresas, com um percentual que reúne vários impostos.</dd>
+          <dt>XML</dt><dd>O arquivo eletrônico da nota fiscal. É ele que tem validade legal. O PDF é só a versão para leitura.</dd>
+        </dl>
+      </section>
+    </div>
+  </main>
+
+  <footer class="rodape">
+    <div class="moldura">
+      <p>Este guia explica o uso da ferramenta e não é orientação contábil ou jurídica. Em caso de dúvida sobre a sua empresa, fale com um contador.</p>
+      <p><a href="./">Central RTC</a>, código aberto. Calculadoras e gerador de DANFSe: <a href="https://github.com/ReceitaFederal">Receita Federal do Brasil</a>.</p>
+    </div>
+  </footer>
+</body>
+</html>

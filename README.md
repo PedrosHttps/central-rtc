@@ -9,7 +9,10 @@
 [![Node 22+](https://img.shields.io/badge/node-22%2B-15253a)](painel/package.json)
 [![Docker Compose](https://img.shields.io/badge/docker-compose-15253a)](docker-compose.yml)
 
+**Disponível online: [central-rtc.taild4c7a5.ts.net](https://central-rtc.taild4c7a5.ts.net)** (peça uma conta na tela de entrada)
+
 [Página do projeto](https://pedroshttps.github.io/central-rtc/) ·
+[Guia de uso](https://pedroshttps.github.io/central-rtc/guia.html) ·
 [Instalar](#como-rodar-com-docker) ·
 [Linha de comando](#linha-de-comando) ·
 [Planilhas](#planilhas-do-lote)
