@@ -15,9 +15,23 @@ if (-not $trava.WaitOne(0)) { exit 0 }
 function Registrar($texto) { Add-Content -Path $log -Value "$(Get-Date -Format 'yyyy-MM-dd HH:mm:ss') $texto" -Encoding UTF8 }
 function Fila { (& powershell -NoProfile -ExecutionPolicy Bypass -File $script listar 2>$null | Out-String).Trim() }
 
+# No máximo 10 análises por hora: um robô mandando pedidos sem parar não vira uma chamada do Claude a cada minuto.
+# Os pedidos não se perdem: a próxima análise olha a fila inteira de uma vez.
+$MAX_POR_HORA = 10
+function PodeAnalisar([datetime[]]$anteriores, [datetime]$agora) {
+  @($anteriores | Where-Object { $_ -gt $agora.AddHours(-1) }).Count -lt $MAX_POR_HORA
+}
+
+# Confere a regra acima toda vez que o vigia sobe.
+$t0 = Get-Date '2026-01-01 12:00'
+if (-not (PodeAnalisar @() $t0) -or (PodeAnalisar @(1..10 | ForEach-Object { $t0.AddMinutes(-$_) }) $t0) -or
+    -not (PodeAnalisar @(1..10 | ForEach-Object { $t0.AddMinutes(-60 - $_) }) $t0)) { throw 'PodeAnalisar está errada' }
+
 Set-Location $pasta
 Registrar 'vigia iniciado'
 $jaAnalisada = '[]'
+$analises = @()
+$avisouLimite = $false
 while ($true) {
   $fila = Fila
   if ($LASTEXITCODE -ne 0) {
@@ -26,6 +40,14 @@ while ($true) {
   }
   # Só chama o Claude se a fila mudou desde a última análise: pedidos deixados em dúvida não geram nova chamada a cada minuto.
   if ($fila -and $fila -ne '[]' -and $fila -ne $jaAnalisada) {
+    $agora = Get-Date
+    if (-not (PodeAnalisar $analises $agora)) {
+      if (-not $avisouLimite) { Registrar "limite de $MAX_POR_HORA análises por hora atingido; a fila espera"; $avisouLimite = $true }
+      Start-Sleep -Seconds 60
+      continue
+    }
+    $avisouLimite = $false
+    $analises = @($analises | Where-Object { $_ -gt $agora.AddHours(-1) }) + $agora
     Registrar 'pedido novo na fila, chamando o Claude'
     $resposta = Get-Content (Join-Path $pasta 'revisao-pedidos.md') -Raw -Encoding UTF8 |
       & claude -p --tools Bash --allowedTools $permissao 2>&1 | Out-String
