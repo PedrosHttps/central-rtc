@@ -45,14 +45,15 @@
               <tr><td data-rotulo="Dado: ">Senha</td><td data-rotulo="Para quê: ">Entrar na conta. Guardamos só uma versão embaralhada (hash scrypt), que ninguém consegue ler</td><td data-rotulo="Tempo: ">Enquanto a conta existir</td></tr>
               <tr><td data-rotulo="Dado: ">Data de criação, último acesso e situação da conta</td><td data-rotulo="Para quê: ">Administrar as contas e a segurança</td><td data-rotulo="Tempo: ">Enquanto a conta existir</td></tr>
               <tr><td data-rotulo="Dado: ">Pedido de conta recusado</td><td data-rotulo="Para quê: ">Registrar a decisão da checagem contra robôs</td><td data-rotulo="Tempo: ">30 dias depois da decisão</td></tr>
-              <tr><td data-rotulo="Dado: ">Endereço de internet (IP) e tipo de navegador de quem está conectado</td><td data-rotulo="Para quê: ">Segurança e monitoramento de acessos pelo administrador</td><td data-rotulo="Tempo: ">Até a sessão acabar (no máximo 12 horas), só na memória</td></tr>
+              <tr><td data-rotulo="Dado: ">Endereço de internet (IP) e tipo de navegador de quem está conectado</td><td data-rotulo="Para quê: ">Segurança e monitoramento de acessos pelo administrador</td><td data-rotulo="Tempo: ">A sessão dura até 12 horas; o registro fica só na memória, até o painel reiniciar</td></tr>
               <tr><td data-rotulo="Dado: ">Tentativas de cadastro (IP, e-mail, nome, empresa e resultado)</td><td data-rotulo="Para quê: ">Detectar robôs e abusos</td><td data-rotulo="Tempo: ">Só na memória, as 200 mais recentes; somem quando o servidor reinicia</td></tr>
-              <tr><td data-rotulo="Dado: ">IP de quem erra a senha</td><td data-rotulo="Para quê: ">Bloquear quem tenta adivinhar senhas</td><td data-rotulo="Tempo: ">15 minutos, só na memória</td></tr>
+              <tr><td data-rotulo="Dado: ">IP de quem erra a senha</td><td data-rotulo="Para quê: ">Bloquear quem tenta adivinhar senhas</td><td data-rotulo="Tempo: ">O bloqueio dura 15 minutos; o registro fica só na memória, até o painel reiniciar</td></tr>
               <tr><td data-rotulo="Dado: ">Registro da checagem automática (nome, e-mail e decisão)</td><td data-rotulo="Para quê: ">Conferir se a checagem está funcionando</td><td data-rotulo="Tempo: ">Até 3 meses</td></tr>
               <tr><td data-rotulo="Dado: ">Cópias de segurança das contas</td><td data-rotulo="Para quê: ">Recuperar as contas se o servidor falhar</td><td data-rotulo="Tempo: ">30 dias</td></tr>
             </tbody>
           </table>
         </div>
+        <p>As cópias de segurança guardam os dados das contas (inclusive pedidos recusados e contas apagadas) por até mais 30 dias depois que eles saem do sistema.</p>
         <p class="destaque"><strong>O que não guardamos:</strong> planilhas, XMLs de notas, valores digitados e resultados dos cálculos. Eles são processados no servidor e descartados em seguida.</p>
       </section>
 
