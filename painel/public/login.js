@@ -35,10 +35,12 @@ fetch('/api/acesso')
   .then((r) => r.json())
   .then(({ email }) => {
     if (!email) return;
-    document.querySelector('#link-pedir-acesso').href = `mailto:${email}?subject=${encodeURIComponent('Central RTC')}`;
-    document.querySelector('#link-esqueci').href = `mailto:${email}?subject=${encodeURIComponent('Central RTC: esqueci a senha')}`;
-    document.querySelector('#pedir-acesso').hidden = false;
-    document.querySelector('#esqueci').hidden = false;
+    const ajuda = document.querySelector('#link-ajuda');
+    const esqueci = document.querySelector('#link-esqueci');
+    ajuda.href = `mailto:${email}?subject=${encodeURIComponent('Central RTC')}`;
+    // O aviso de escrever do e-mail da conta vai no corpo da mensagem, não na tela.
+    esqueci.href = `mailto:${email}?subject=${encodeURIComponent('Central RTC: esqueci a senha')}&body=${encodeURIComponent('Escrevo do e-mail da minha conta e peço uma senha nova.')}`;
+    ajuda.hidden = esqueci.hidden = false;
   })
   .catch(() => {});
 

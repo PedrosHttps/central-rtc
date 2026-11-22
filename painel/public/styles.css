@@ -468,6 +468,9 @@ dl.chaves dd { overflow-wrap: anywhere; }
 .entrada .marca { margin-bottom: 1.5rem; padding-bottom: 1rem; border-bottom: 2px solid var(--tinta); }
 .entrada h1 { font-size: 1.75rem; margin-bottom: 1rem; }
 .entrada .acoes { margin-bottom: 1rem; }
+.entrada a.botao { text-decoration: none; text-align: center; }
+.entrada-esqueci { display: block; width: fit-content; margin: 0.5rem 0 0 auto; font-size: 0.875rem; }
+.entrada-links { display: flex; flex-wrap: wrap; gap: 0.25rem 1.25rem; margin-top: 0.5rem; padding-top: 0.9rem; border-top: 1px solid var(--linha); font-size: 0.875rem; }
 
 .conta { display: flex; flex-wrap: wrap; align-items: center; gap: 0.25rem 0.5rem; font-size: 0.9375rem; }
 .conta-nome { color: var(--grafite); }
@@ -508,6 +511,6 @@ dl.chaves dd { overflow-wrap: anywhere; }
   .pagina-entrada { place-items: start center; padding: 1rem; }
   .entrada { margin-top: 3vh; padding-block: 1.25rem; }
   .entrada .marca { margin-bottom: 1.1rem; }
-  .entrada .botao-principal { width: 100%; padding-block: 0.8rem; }
+  .entrada .acoes .botao { width: 100%; padding-block: 0.8rem; }
   .dialogo { width: calc(100% - 1rem); padding-inline: 0.85rem; }
 }

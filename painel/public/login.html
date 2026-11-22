@@ -27,17 +27,19 @@
           <input name="senha" type="password" autocomplete="current-password" required>
         </label>
       </div>
+      <a id="link-esqueci" class="entrada-esqueci" href="#" hidden>Esqueceu a senha?</a>
       <div id="erro-entrar" class="mensagem mensagem-erro" role="alert" hidden></div>
       <div class="acoes">
         <button type="submit" class="botao botao-principal">Entrar</button>
+        <a class="botao" href="cadastro.html">Criar conta</a>
       </div>
     </form>
 
-    <p class="nota">Ainda não tem conta? <a href="cadastro.html">Criar conta</a>. A conta é liberada em 1 a 2 minutos.</p>
-    <p class="nota">Primeira vez por aqui? O <a href="https://pedroshttps.github.io/central-rtc/guia.html" target="_blank" rel="noopener">guia de uso</a> explica tudo em linguagem simples.</p>
-    <p id="esqueci" class="nota" hidden>Esqueceu a senha? <a id="link-esqueci" href="#">Peça uma senha nova ao administrador</a>, escrevendo do e-mail da sua conta.</p>
-    <p id="pedir-acesso" class="nota" hidden>Dúvidas? <a id="link-pedir-acesso" href="#">Escreva para o administrador</a>.</p>
-    <p class="entrada-rodape">Dados pessoais tratados conforme a LGPD (Lei 13.709/2018). <a href="https://pedroshttps.github.io/central-rtc/privacidade.html" target="_blank" rel="noopener">Aviso de privacidade</a>.</p>
+    <nav class="entrada-links" aria-label="Ajuda">
+      <a href="https://pedroshttps.github.io/central-rtc/guia.html" target="_blank" rel="noopener">Guia de uso</a>
+      <a id="link-ajuda" href="#" hidden>Ajuda</a>
+      <a href="https://pedroshttps.github.io/central-rtc/privacidade.html" target="_blank" rel="noopener">Privacidade (LGPD)</a>
+    </nav>
   </main>
 </body>
 </html>
