@@ -18,6 +18,7 @@ Painel web + linha de comando que usam os três serviços de código aberto da R
 - `painel/dev/lib.test.js` — testes com `node:test`.
 - `docker/java.Dockerfile` — constrói as duas calculadoras Java a partir do GitHub; gera o banco SQLite uma vez com o Flyway do regime regular e copia para as duas imagens.
 - `docker-compose.yml` — sobe os 3 serviços + painel, portas presas a 127.0.0.1.
+- `servicos-windows.ps1` — alternativa sem Docker: clona, compila e sobe os 3 serviços no Windows (Java 25 + Go 1.27). Salvo em UTF-8 **com BOM**, senão o PowerShell 5.1 quebra os acentos.
 - `docs/` — página do GitHub Pages (HTML único + imagens + fontes).
 
 ## Comandos
@@ -48,11 +49,8 @@ Com os serviços reais: `docker compose up -d --build` na raiz.
 - **DANFSe**: `POST /api/danfse?stc=0|1|2&canhoto=true|false` com o XML no corpo (até 5 MiB) → PDF.
 - Códigos de documento: 55 NF-e, 65 NFC-e, 91 NFS-e, 57 CT-e, 67 CT-e OS, 63 BP-e, 93 BP-e TM, 62 NFCom.
 
-## Ainda não verificado contra os serviços reais
+## Conferido contra os serviços reais (21/11/2026)
 
-Tudo foi testado só contra o simulador (o ambiente onde o projeto foi criado não alcançava Maven Central nem o proxy do Go). Ao rodar com os serviços reais, confira primeiro:
+Com `servicos-windows.ps1` (regime geral 1.7.2, Simples 1.0.2, banco V0073): `status`, lotes do Simples e do regime geral (com e sem erro), geração e validação de XML, DANFSe em PDF e o painel no navegador. Formatos reais: versão em `versaoApp`; erro do DANFSe em `mensagem`; erro de validação do regime geral é ProblemDetail com `title` + `detail` (sem `errors[]`); erros por item vêm em `objetos[].erros[]` com o código no texto (`REG-004`, `VSN-021`); `xml/validate` responde JSON `true`.
 
-1. Se o `docker compose up -d --build` termina. Conferido contra os repositórios em 21/11/2026: os dois Java exigem Java 25, o `pom.xml` do regime regular tem o plugin do Flyway, os jars se chamam `api-regime-geral.jar` e `api-simples-nacional.jar`, os bancos ficam em `./calculadora/db/calculadora-pro.db` e o DANFSe lê `SERVER_PORT`. Falta rodar o build de verdade.
-2. Os nomes dos campos de versão lidos em `server.js` → `verificarServico` (`versaoApp`, `versaoDb`… foram suposições).
-3. O formato de erro do DANFSe (`mensagem` vs `message`) e do regime geral (ProblemDetail com `errors[]`), usado em `mensagemDeErro`.
-4. Os campos lidos em `itensSimples` e `itensRegimeGeral` (`lib/rtc.js`) contra uma resposta real.
+Ainda não rodado: o build do `docker compose` (a máquina de teste não tem virtualização ligada). O Dockerfile segue os mesmos passos do script.

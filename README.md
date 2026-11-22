@@ -81,9 +81,12 @@ As portas ficam presas ao `127.0.0.1`, então só o seu computador acessa.
 
 ## Como rodar (sem Docker)
 
-1. Suba cada serviço seguindo o README do repositório dele. Você vai precisar de Java 25 (regime geral e Simples) e Go 1.27 (DANFSe).
-   - O Simples Nacional usa o mesmo banco do regime geral: copie `calculadora/db/calculadora-pro.db` gerado no regime geral para a mesma pasta dentro do projeto do Simples.
-   - O DANFSe também usa a porta 8080 por padrão. Rode com `SERVER_PORT=8081`.
+1. Suba os três serviços. Você vai precisar de Java 25 (regime geral e Simples), Go 1.27 (DANFSe) e Git; o Maven não, os repositórios trazem o `mvnw`.
+   - **No Windows**, o script faz tudo: clona em `Documents\rfb-servicos`, gera o banco, compila (só na primeira vez) e abre cada serviço numa janela.
+     ```powershell
+     powershell -ExecutionPolicy Bypass -File servicos-windows.ps1
+     ```
+   - **Em outro sistema**, siga o README de cada repositório. O Simples Nacional usa o mesmo banco do regime geral: copie `calculadora/db/calculadora-pro.db` gerado no regime geral para a mesma pasta dentro do projeto do Simples. O DANFSe também usa a porta 8080 por padrão: rode com `SERVER_PORT=8081`.
 2. Rode o painel (Node 22 ou mais novo, sem `npm install`):
 
 ```bash
