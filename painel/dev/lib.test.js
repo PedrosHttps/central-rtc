@@ -138,7 +138,7 @@ test('leitura do resultado do regime geral (formato da documentação oficial)',
   assert.equal(it.vIBS, '0.48');
 });
 
-test('Painel: com PAINEL_USUARIO/PAINEL_SENHA, só entra com a senha certa', async (t) => {
+test('Painel: com PAINEL_USUARIO/PAINEL_SENHA, só entra com a senha certa e bloqueia quem erra demais', async (t) => {
   const porta = 39517;
   const env = { ...process.env, PORTA: String(porta), HOST: '127.0.0.1', PAINEL_USUARIO: 'ana', PAINEL_SENHA: 'senha-de-teste-123' };
   const filho = spawn(process.execPath, [fileURLToPath(new URL('../server.js', import.meta.url))], { env });
@@ -147,12 +147,21 @@ test('Painel: com PAINEL_USUARIO/PAINEL_SENHA, só entra com a senha certa', asy
     filho.stdout.on('data', (d) => String(d).includes('no ar') && ok());
     filho.on('exit', (c) => falha(new Error(`painel saiu com ${c}`)));
   });
-  const pedir = (senha) => fetch(`http://127.0.0.1:${porta}/status`, {
-    headers: senha ? { authorization: `Basic ${Buffer.from(`ana:${senha}`).toString('base64')}` } : {},
+  const pedir = (senha, ip = '10.0.0.1') => fetch(`http://127.0.0.1:${porta}/status`, {
+    headers: {
+      'x-forwarded-for': ip,
+      ...(senha ? { authorization: `Basic ${Buffer.from(`ana:${senha}`).toString('base64')}` } : {}),
+    },
   });
   const sem = await pedir();
   assert.equal(sem.status, 401);
   assert.match(sem.headers.get('www-authenticate'), /^Basic/);
+  assert.match(sem.headers.get('content-security-policy'), /frame-ancestors 'none'/);
   assert.equal((await pedir('errada')).status, 401);
   assert.equal((await pedir('senha-de-teste-123')).status, 200);
+
+  // 10 erros do mesmo IP bloqueiam esse IP (até com a senha certa); outro IP segue entrando.
+  for (let i = 0; i < 10; i++) assert.equal((await pedir('errada', '10.0.0.2')).status, 401);
+  assert.equal((await pedir('senha-de-teste-123', '10.0.0.2')).status, 429);
+  assert.equal((await pedir('senha-de-teste-123', '10.0.0.3')).status, 200);
 });

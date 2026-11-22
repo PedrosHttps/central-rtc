@@ -28,6 +28,34 @@ function autorizado(req) {
   return timingSafeEqual(resumo(Buffer.from(valor, 'base64').toString()), CREDENCIAL);
 }
 
+// Depois de 10 senhas erradas em 15 minutos, aquele endereço fica bloqueado até a janela acabar.
+const MAX_FALHAS = 10;
+const JANELA_MS = 15 * 60 * 1000;
+const falhas = new Map(); // ip → { n, desde }
+// Atrás do Tailscale e do Docker o IP real vem no último item do X-Forwarded-For (o que o proxy acrescentou).
+const ipDe = (req) => (req.headers['x-forwarded-for'] || '').split(',').pop().trim() || req.socket.remoteAddress;
+
+function bloqueado(ip) {
+  const f = falhas.get(ip);
+  return Boolean(f) && f.n >= MAX_FALHAS && Date.now() - f.desde < JANELA_MS;
+}
+
+function registrarFalha(ip) {
+  const f = falhas.get(ip);
+  if (f && Date.now() - f.desde < JANELA_MS) f.n++;
+  else falhas.set(ip, { n: 1, desde: Date.now() });
+  if (falhas.size > 10000) falhas.clear(); // shortcut: zera tudo se encher, ok para um painel de poucos usuários
+}
+
+const SEGURANCA = {
+  // Só carrega o que vem do próprio painel; blob: é a prévia do PDF; ninguém pode embutir o painel em outro site.
+  'Content-Security-Policy':
+    "default-src 'self'; img-src 'self' data:; frame-src blob:; object-src 'none'; base-uri 'none'; form-action 'self'; frame-ancestors 'none'",
+  'X-Content-Type-Options': 'nosniff',
+  'Referrer-Policy': 'no-referrer',
+  'Strict-Transport-Security': 'max-age=31536000',
+};
+
 const SERVICOS = {
   rg: {
     nome: 'Regime geral (CBS, IBS e IS)',
@@ -141,7 +169,6 @@ async function servirArquivo(res, caminhoUrl) {
     res.writeHead(200, {
       'Content-Type': TIPOS[ext] || 'application/octet-stream',
       'Cache-Control': ext === '.woff2' ? 'public, max-age=604800' : 'no-cache',
-      'X-Content-Type-Options': 'nosniff',
     });
     res.end(dados);
   } catch {
@@ -151,10 +178,18 @@ async function servirArquivo(res, caminhoUrl) {
 
 const servidor = http.createServer(async (req, res) => {
   try {
+    for (const [nome, valor] of Object.entries(SEGURANCA)) res.setHeader(nome, valor);
+    const ip = ipDe(req);
+    if (SENHA && bloqueado(ip)) {
+      res.writeHead(429, { 'Retry-After': String(JANELA_MS / 1000), 'Cache-Control': 'no-store' });
+      return res.end('Muitas senhas erradas. Espere 15 minutos e tente de novo.');
+    }
     if (!autorizado(req)) {
+      if (req.headers.authorization) registrarFalha(ip); // a primeira visita chega sem senha e não conta
       res.writeHead(401, { 'WWW-Authenticate': 'Basic realm="Central RTC", charset="UTF-8"', 'Cache-Control': 'no-store' });
       return res.end('Login necessário.');
     }
+    falhas.delete(ip);
     const url = new URL(req.url, 'http://local');
     const m = url.pathname.match(/^\/svc\/(rg|sn|danfse)(\/.*)?$/);
     if (m) return await repassar(req, res, m[1], (m[2] || '') + url.search);
