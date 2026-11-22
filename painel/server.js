@@ -4,10 +4,11 @@
 import http from 'node:http';
 import { createHash, randomBytes, scrypt as scryptCb, timingSafeEqual } from 'node:crypto';
 import { mkdirSync, readFileSync, renameSync, writeFileSync } from 'node:fs';
-import { readFile } from 'node:fs/promises';
+import { readFile, stat } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { promisify } from 'node:util';
+import { brotliCompressSync, constants as zlib, gzipSync } from 'node:zlib';
 
 const PASTA = path.dirname(fileURLToPath(import.meta.url));
 const RAIZ = path.join(PASTA, 'public');
@@ -384,21 +385,55 @@ async function verificarServico(chave) {
   }
 }
 
-async function servirArquivo(res, caminhoUrl) {
+// Os arquivos da interface ficam na memória já comprimidos; se mudarem no disco, são lidos de novo.
+const COMPRIMIVEIS = new Set(['.html', '.js', '.css', '.json', '.csv', '.svg', '.txt']);
+const cacheArquivos = new Map(); // caminho → { mtime, etag, dados, br, gzip }
+
+async function lerArquivo(alvo, ext) {
+  const { mtimeMs } = await stat(alvo);
+  const salvo = cacheArquivos.get(alvo);
+  if (salvo?.mtime === mtimeMs) return salvo;
+  const dados = await readFile(alvo);
+  const texto = COMPRIMIVEIS.has(ext);
+  const arquivo = {
+    mtime: mtimeMs,
+    etag: `W/"${createHash('sha1').update(dados).digest('base64url')}"`,
+    dados,
+    br: texto ? brotliCompressSync(dados, { params: { [zlib.BROTLI_PARAM_QUALITY]: 11 } }) : null,
+    gzip: texto ? gzipSync(dados, { level: 9 }) : null,
+  };
+  cacheArquivos.set(alvo, arquivo);
+  return arquivo;
+}
+
+async function servirArquivo(req, res, caminhoUrl) {
   const relativo = decodeURIComponent(caminhoUrl === '/' ? '/index.html' : caminhoUrl);
   const alvo = path.normalize(path.join(RAIZ, relativo));
   if (!alvo.startsWith(RAIZ + path.sep)) return responderJson(res, 403, { mensagem: 'Caminho inválido.' });
+  const ext = path.extname(alvo).toLowerCase();
+  let arquivo;
   try {
-    const dados = await readFile(alvo);
-    const ext = path.extname(alvo).toLowerCase();
-    res.writeHead(200, {
-      'Content-Type': TIPOS[ext] || 'application/octet-stream',
-      'Cache-Control': ext === '.woff2' ? 'public, max-age=604800' : 'no-cache',
-    });
-    res.end(dados);
+    arquivo = await lerArquivo(alvo, ext);
   } catch {
-    responderJson(res, 404, { mensagem: 'Não encontrado.' });
+    return responderJson(res, 404, { mensagem: 'Não encontrado.' });
   }
+  const cabecalhos = {
+    'Content-Type': TIPOS[ext] || 'application/octet-stream',
+    // As fontes nunca mudam; o resto o navegador confere a cada visita e só baixa de novo se mudou.
+    'Cache-Control': ext === '.woff2' ? 'public, max-age=31536000, immutable' : 'no-cache',
+    ETag: arquivo.etag,
+    Vary: 'Accept-Encoding',
+  };
+  if (req.headers['if-none-match'] === arquivo.etag) {
+    res.writeHead(304, cabecalhos);
+    return res.end();
+  }
+  const aceita = req.headers['accept-encoding'] || '';
+  let corpo = arquivo.dados;
+  if (arquivo.br && /\bbr\b/.test(aceita)) [corpo, cabecalhos['Content-Encoding']] = [arquivo.br, 'br'];
+  else if (arquivo.gzip && /\bgzip\b/.test(aceita)) [corpo, cabecalhos['Content-Encoding']] = [arquivo.gzip, 'gzip'];
+  res.writeHead(200, { ...cabecalhos, 'Content-Length': corpo.length });
+  res.end(corpo);
 }
 
 const servidor = http.createServer(async (req, res) => {
@@ -416,7 +451,7 @@ const servidor = http.createServer(async (req, res) => {
     }
 
     if (req.method !== 'GET') return responderJson(res, 405, { mensagem: 'Método não permitido.' });
-    return await servirArquivo(res, url.pathname);
+    return await servirArquivo(req, res, url.pathname);
   } catch (e) {
     if (res.headersSent) return res.end();
     responderJson(res, e.status || 500, { mensagem: e.status ? e.message : 'Erro interno do painel.' });

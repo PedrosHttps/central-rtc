@@ -183,6 +183,13 @@ test('Painel: login, cadastro de usuários e troca da senha provisória', async 
   assert.equal(inicio.status, 302);
   assert.equal(inicio.headers.get('location'), '/login.html');
   assert.match(inicio.headers.get('content-security-policy'), /frame-ancestors 'none'/);
+
+  // Arquivos vão comprimidos e, se o navegador já tem a versão atual, nada é baixado de novo.
+  const tela = await pedir('/login.html');
+  assert.equal(tela.headers.get('content-encoding'), 'br');
+  assert.match(await tela.text(), /<form id="form-entrar"/);
+  const repetida = await fetch(`http://127.0.0.1:39517/login.html`, { headers: { 'if-none-match': tela.headers.get('etag') } });
+  assert.equal(repetida.status, 304);
   assert.equal((await pedir('/status')).status, 401);
   assert.equal((await pedir('/svc/rg/versao')).status, 401);
   assert.equal((await pedir('/login.html')).status, 200);

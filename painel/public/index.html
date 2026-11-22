@@ -6,6 +6,13 @@
   <title>Central RTC</title>
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect x='3' y='3' width='26' height='26' rx='3' fill='none' stroke='%235A2D82' stroke-width='3'/%3E%3Cpath d='M9 12h14M9 17h14M9 22h8' stroke='%2315253A' stroke-width='2.5'/%3E%3C/svg%3E">
   <link rel="stylesheet" href="styles.css">
+  <!-- Pede tudo de uma vez, em vez de descobrir um arquivo só depois de baixar o anterior. -->
+  <link rel="preload" href="fontes/barlow-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="fontes/barlow-semi-condensed-latin-600-normal.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="modulepreload" href="lib/rtc.js">
+  <link rel="modulepreload" href="lib/csv.js">
+  <link rel="modulepreload" href="lib/formato.js">
+  <link rel="modulepreload" href="lib/zip.js">
   <script type="module" src="app.js"></script>
 </head>
 <body>

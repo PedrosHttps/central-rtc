@@ -469,3 +469,29 @@ dl.chaves dd { overflow-wrap: anywhere; }
 .dialogo .acoes { margin-bottom: 0.5rem; }
 .acoes-linha { white-space: nowrap; text-align: right; }
 .acoes-linha .botao { padding: 0.2rem 0.4rem; font-size: 0.9375rem; }
+
+/* ------------------------------------------------------------------ celular */
+
+@media (max-width: 52rem) {
+  /* Cabeçalho compacto: marca e conta na mesma linha, serviços embaixo. */
+  .topo { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 0.3rem 0.75rem; padding-block: 0.6rem; }
+  .marca-nome { font-size: 1.3rem; }
+  .conta { grid-column: 2; grid-row: 1; }
+  .servicos { grid-column: 1 / -1; gap: 0.25rem 0.75rem; }
+  .servicos-lista { gap: 0.25rem 0.9rem; }
+  .servicos-lista li { font-size: 0.875rem; }
+  .servicos-lista small { display: none; }
+  .entrada .marca-sub { display: block; }
+  #btn-status { padding: 0.2rem 0; font-size: 0.875rem; }
+  /* As abas que não cabem somem aos poucos na borda: mostra que dá para arrastar para o lado. */
+  .menu { padding-right: 2.5rem; mask-image: linear-gradient(to right, #000 calc(100% - 2.5rem), transparent); }
+}
+
+@media (max-width: 32rem) {
+  .conta-nome { display: none; }
+  .pagina-entrada { place-items: start center; padding: 1rem; }
+  .entrada { margin-top: 3vh; padding-block: 1.25rem; }
+  .entrada .marca { margin-bottom: 1.1rem; }
+  .entrada .botao-principal { width: 100%; padding-block: 0.8rem; }
+  .dialogo { width: calc(100% - 1rem); padding-inline: 0.85rem; }
+}

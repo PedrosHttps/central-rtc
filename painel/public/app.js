@@ -147,8 +147,10 @@ function abrirSecao(nome, { foco = false } = {}) {
   if (!SECOES.includes(nome)) nome = 'simples';
   for (const s of SECOES) $(`#secao-${s}`).hidden = s !== nome;
   for (const b of $$('.menu button')) {
-    if (b.dataset.secao === nome) b.setAttribute('aria-current', 'page');
-    else b.removeAttribute('aria-current');
+    if (b.dataset.secao === nome) {
+      b.setAttribute('aria-current', 'page');
+      b.scrollIntoView({ block: 'nearest', inline: 'nearest' }); // no celular o menu rola para o lado
+    } else b.removeAttribute('aria-current');
   }
   if (location.hash !== `#${nome}`) history.replaceState(null, '', `#${nome}`);
   if (foco) $(`#secao-${nome} h1`).focus({ preventScroll: false });
