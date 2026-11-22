@@ -31,19 +31,34 @@ function autorizado(req) {
 // Depois de 10 senhas erradas em 15 minutos, aquele endereço fica bloqueado até a janela acabar.
 const MAX_FALHAS = 10;
 const JANELA_MS = 15 * 60 * 1000;
-const falhas = new Map(); // ip → { n, desde }
+const falhas = new Map(); // endereço → { n, desde, ultima }
+
+// IPv6 conta pelo bloco /64 (os 4 primeiros grupos): um único cliente costuma receber o bloco inteiro.
+function chaveDoIp(ip) {
+  if (!ip.includes(':') || ip.startsWith('::ffff:')) return ip;
+  const [esq, dir = ''] = ip.split('%')[0].split('::');
+  const a = esq ? esq.split(':') : [];
+  const b = dir ? dir.split(':') : [];
+  const grupos = [...a, ...Array(Math.max(0, 8 - a.length - b.length)).fill('0'), ...b];
+  return `${grupos.slice(0, 4).map((g) => parseInt(g, 16).toString(16)).join(':')}::/64`;
+}
+
 // Atrás do Tailscale e do Docker o IP real vem no último item do X-Forwarded-For (o que o proxy acrescentou).
-const ipDe = (req) => (req.headers['x-forwarded-for'] || '').split(',').pop().trim() || req.socket.remoteAddress;
+const ipDe = (req) => chaveDoIp((req.headers['x-forwarded-for'] || '').split(',').pop().trim() || req.socket.remoteAddress || '');
 
 function bloqueado(ip) {
   const f = falhas.get(ip);
   return Boolean(f) && f.n >= MAX_FALHAS && Date.now() - f.desde < JANELA_MS;
 }
 
-function registrarFalha(ip) {
+function registrarFalha(ip, authorization) {
+  const tentativa = resumo(authorization).toString('hex');
   const f = falhas.get(ip);
-  if (f && Date.now() - f.desde < JANELA_MS) f.n++;
-  else falhas.set(ip, { n: 1, desde: Date.now() });
+  if (f && Date.now() - f.desde < JANELA_MS) {
+    // A mesma senha errada repetida não conta: é uma aba aberta com a senha antiga, não alguém adivinhando.
+    if (f.ultima !== tentativa) f.n++;
+    f.ultima = tentativa;
+  } else falhas.set(ip, { n: 1, desde: Date.now(), ultima: tentativa });
   if (falhas.size > 10000) falhas.clear(); // shortcut: zera tudo se encher, ok para um painel de poucos usuários
 }
 
@@ -185,7 +200,7 @@ const servidor = http.createServer(async (req, res) => {
       return res.end('Muitas senhas erradas. Espere 15 minutos e tente de novo.');
     }
     if (!autorizado(req)) {
-      if (req.headers.authorization) registrarFalha(ip); // a primeira visita chega sem senha e não conta
+      if (req.headers.authorization) registrarFalha(ip, req.headers.authorization); // a primeira visita chega sem senha e não conta
       res.writeHead(401, { 'WWW-Authenticate': 'Basic realm="Central RTC", charset="UTF-8"', 'Cache-Control': 'no-store' });
       return res.end('Login necessário.');
     }

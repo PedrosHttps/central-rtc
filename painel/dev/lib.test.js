@@ -160,8 +160,17 @@ test('Painel: com PAINEL_USUARIO/PAINEL_SENHA, só entra com a senha certa e blo
   assert.equal((await pedir('errada')).status, 401);
   assert.equal((await pedir('senha-de-teste-123')).status, 200);
 
-  // 10 erros do mesmo IP bloqueiam esse IP (até com a senha certa); outro IP segue entrando.
-  for (let i = 0; i < 10; i++) assert.equal((await pedir('errada', '10.0.0.2')).status, 401);
+  // 10 senhas erradas diferentes do mesmo IP bloqueiam esse IP (até com a senha certa); outro IP segue entrando.
+  for (let i = 0; i < 10; i++) assert.equal((await pedir(`errada-${i}`, '10.0.0.2')).status, 401);
   assert.equal((await pedir('senha-de-teste-123', '10.0.0.2')).status, 429);
   assert.equal((await pedir('senha-de-teste-123', '10.0.0.3')).status, 200);
+
+  // A mesma senha antiga repetida (aba aberta depois da troca de senha) não bloqueia.
+  for (let i = 0; i < 15; i++) assert.equal((await pedir('senha-antiga', '10.0.0.4')).status, 401);
+  assert.equal((await pedir('senha-de-teste-123', '10.0.0.4')).status, 200);
+
+  // IPv6 conta pelo bloco /64: trocar de endereço dentro do bloco não escapa; outro bloco segue entrando.
+  for (let i = 1; i <= 10; i++) assert.equal((await pedir(`errada-${i}`, `2001:db8:1:2::${i}`)).status, 401);
+  assert.equal((await pedir('senha-de-teste-123', '2001:0db8:0001:0002:ffff::99')).status, 429);
+  assert.equal((await pedir('senha-de-teste-123', '2001:db8:1:3::1')).status, 200);
 });
