@@ -46,6 +46,7 @@ function CopiarContas {
 
 Set-Location $pasta
 [Console]::OutputEncoding = [Text.Encoding]::UTF8  # a saída do claude é UTF-8; sem isso os acentos quebram no log
+$versao = (Get-Item $PSCommandPath).LastWriteTime
 Registrar 'vigia iniciado'
 $jaAnalisada = '[]'
 $analises = @()
@@ -53,6 +54,13 @@ $avisouLimite = $false
 $copiaFeita = $null
 $avisouCopia = $null
 while ($true) {
+  # Este arquivo mudou: sobe a versão nova e esta cópia sai, sem ninguém precisar reiniciar o vigia à mão.
+  if ((Get-Item $PSCommandPath).LastWriteTime -ne $versao) {
+    Registrar 'vigia-pedidos.ps1 mudou; reiniciando com a versão nova'
+    $trava.ReleaseMutex()
+    Start-Process powershell.exe -WindowStyle Hidden -ArgumentList '-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', "`"$PSCommandPath`""
+    exit 0
+  }
   $hoje = (Get-Date).Date
   if ($copiaFeita -ne $hoje) {
     if (CopiarContas) { $copiaFeita = $hoje; LimparRegistros; Registrar 'cópia das contas salva' }
