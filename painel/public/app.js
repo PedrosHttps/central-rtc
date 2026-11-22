@@ -1101,7 +1101,7 @@ function dialogoUsuarios() {
       aguardando.length ? h('h3', { class: 'titulo-bloco', text: `Pedidos aguardando análise (${aguardando.length})` }) : null,
       aguardando.map((u) => h('div', { class: 'pedido' },
         h('strong', { text: `${u.pedido?.nome || '—'} · ${u.usuario}` }),
-        h('p', { text: [u.pedido?.empresa, `pediu em ${dataBR(u.criadoEm)}`, u.pedido?.emailConfirmado ? 'e-mail confirmado pelo Google' : 'e-mail não confirmado'].filter(Boolean).join(' · ') }),
+        h('p', { text: [u.pedido?.empresa, `pediu em ${dataBR(u.criadoEm)}`].filter(Boolean).join(' · ') }),
         h('div', { class: 'acoes-linha' },
           botao('Aprovar', () => decidir(u.usuario, 'aprovar')),
           botao('Recusar', () => decidir(u.usuario, 'recusar')),
@@ -1203,7 +1203,7 @@ async function iniciarConta() {
     h('span', { class: 'conta-nome' }, 'Entrou como ', h('strong', { text: eu.usuario })),
     eu.admin
       ? h('button', { type: 'button', class: 'botao botao-discreto', onclick: dialogoUsuarios }, 'Usuários')
-      : eu.google ? null : h('button', { type: 'button', class: 'botao botao-discreto', onclick: () => dialogoTrocarSenha(false) }, 'Trocar senha'),
+      : h('button', { type: 'button', class: 'botao botao-discreto', onclick: () => dialogoTrocarSenha(false) }, 'Trocar senha'),
     h('a', { class: 'botao botao-discreto', href: 'https://pedroshttps.github.io/central-rtc/guia.html', target: '_blank', rel: 'noopener' }, 'Guia'),
     h('button', {
       type: 'button',

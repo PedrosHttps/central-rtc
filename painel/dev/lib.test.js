@@ -198,7 +198,7 @@ test('Painel: login, cadastro de usuários e troca da senha provisória', async 
   assert.equal((await pedir('/status')).status, 401);
   assert.equal((await pedir('/svc/rg/versao')).status, 401);
   assert.equal((await pedir('/login.html')).status, 200);
-  assert.deepEqual(await (await pedir('/api/acesso')).json(), { email: 'acesso@exemplo.com', google: false });
+  assert.deepEqual(await (await pedir('/api/acesso')).json(), { email: 'acesso@exemplo.com' });
 
   assert.equal((await entrar('ana', 'errada')).status, 401);
   assert.equal((await entrar('ninguem', 'senha-de-teste-123')).status, 401);
@@ -318,83 +318,4 @@ test('Painel: a pessoa pede acesso sozinha e a revisão aprova ou recusa', async
   const pendentes = (await (await revisao('/api/pedidos')).json()).pedidos.filter((p) => p.usuario.endsWith('@x.com'));
   assert.equal(pendentes.length, 3);
   assert.equal((await pedirAcesso({ ...bia, email: 'p99@x.com' }, '10.0.1.3')).status, 429);
-});
-
-test('Painel: login com Google cai no cadastro, passa pela análise e depois entra', async (t) => {
-  // Imita o endereço do Google que troca o código pelo id_token. O "código" do teste já é o conteúdo do token.
-  const trocas = [];
-  const falso = http.createServer((req, res) => {
-    let corpo = '';
-    req.on('data', (p) => (corpo += p));
-    req.on('end', () => {
-      const form = new URLSearchParams(corpo);
-      trocas.push(form);
-      res.writeHead(200, { 'content-type': 'application/json' });
-      res.end(JSON.stringify({ id_token: `cabecalho.${form.get('code')}.assinatura` }));
-    });
-  });
-  await new Promise((ok) => falso.listen(39531, '127.0.0.1', ok));
-  t.after(() => falso.close());
-  const { pedir, entrar } = await subirPainel(t, 39520, {
-    GOOGLE_CLIENT_ID: 'id-do-app.apps.googleusercontent.com', GOOGLE_CLIENT_SECRET: 'segredo-de-teste',
-    PAINEL_URL: 'https://painel.exemplo.test', GOOGLE_TOKEN_URL: 'http://127.0.0.1:39531/token',
-  });
-  const cookieDe = (r, nome) => new RegExp(`${nome}=([\\w.-]+)`).exec(r.headers.getSetCookie().join(';'))?.[1];
-  const token = (extra = {}) => Buffer.from(JSON.stringify({
-    iss: 'https://accounts.google.com', aud: 'id-do-app.apps.googleusercontent.com', exp: Date.now() / 1000 + 300,
-    email: 'Gabi@Gmail.com', email_verified: true, name: 'Gabriela Lima', ...extra,
-  })).toString('base64url');
-
-  // Ida ao Google: state e PKCE no endereço, e o par state.verificador num cookie.
-  const loginGoogle = async (extra) => {
-    const ida = await pedir('/api/google/entrar');
-    assert.equal(ida.status, 302);
-    const destino = new URL(ida.headers.get('location'));
-    assert.equal(destino.origin, 'https://accounts.google.com');
-    assert.equal(destino.searchParams.get('redirect_uri'), 'https://painel.exemplo.test/api/google/retorno');
-    assert.equal(destino.searchParams.get('code_challenge_method'), 'S256');
-    const ida2 = cookieDe(ida, 'google_ida');
-    const volta = await fetch(`http://127.0.0.1:39520/api/google/retorno?code=${token(extra)}&state=${destino.searchParams.get('state')}`, {
-      headers: { cookie: `google_ida=${ida2}` },
-    });
-    return { volta, html: await volta.text(), verificador: ida2.split('.')[1], desafio: destino.searchParams.get('code_challenge') };
-  };
-
-  // Sem conta: vai para o cadastro com o e-mail confirmado. O verificador do PKCE foi mandado na troca.
-  const primeira = await loginGoogle();
-  assert.match(primeira.html, /url=\/cadastro\.html\?google=1/);
-  assert.equal(trocas.at(-1).get('code_verifier'), primeira.verificador);
-  assert.equal(createHash('sha256').update(primeira.verificador).digest('base64url'), primeira.desafio);
-  const cadastroGoogle = cookieDe(primeira.volta, 'google_cadastro');
-  const identidade = await (await fetch('http://127.0.0.1:39520/api/google/identidade', { headers: { cookie: `google_cadastro=${cadastroGoogle}` } })).json();
-  assert.deepEqual(identidade, { email: 'gabi@gmail.com', nome: 'Gabriela Lima' });
-
-  // O e-mail mandado no corpo é ignorado: vale o que o Google confirmou. Sem senha.
-  const pedido = await fetch('http://127.0.0.1:39520/api/cadastro', {
-    method: 'POST',
-    headers: { 'content-type': 'application/json', cookie: `google_cadastro=${cadastroGoogle}`, 'x-forwarded-for': '10.0.2.1' },
-    body: JSON.stringify({ google: true, email: 'outra@pessoa.com', nome: 'Gabriela Lima' }),
-  });
-  assert.equal(pedido.status, 201);
-  const { pedidos } = await (await fetch('http://127.0.0.1:39520/api/pedidos', { headers: { authorization: `Bearer ${CHAVE_REVISAO}` } })).json();
-  assert.deepEqual(pedidos.map((p) => [p.usuario, p.emailConfirmado]), [['gabi@gmail.com', true]]);
-
-  // Em análise: o Google devolve para o login com o aviso. Conta só do Google não entra por senha.
-  assert.match((await loginGoogle()).html, /aviso=pendente/);
-  assert.equal((await entrar('gabi@gmail.com', '')).status, 401);
-  await fetch('http://127.0.0.1:39520/api/usuarios/gabi%40gmail.com/aprovar', { method: 'POST', headers: { authorization: `Bearer ${CHAVE_REVISAO}`, 'content-type': 'application/json' }, body: '{}' });
-
-  // Aprovada: entra e usa o painel. Não tem senha para trocar.
-  const aprovada = await loginGoogle();
-  assert.match(aprovada.html, /url=\/"/);
-  const sessao = cookieDe(aprovada.volta, 'sessao');
-  assert.equal((await pedir('/status', { sessao })).status, 200);
-  assert.deepEqual(await (await pedir('/api/eu', { sessao })).json(), { usuario: 'gabi@gmail.com', admin: false, trocarSenha: false, google: true });
-  assert.equal((await pedir('/api/senha', { metodo: 'POST', corpo: { atual: 'x', nova: 'qualquer-senha-nova' }, sessao })).status, 400);
-
-  // Recusado: token de outro app, e-mail não confirmado, ou volta sem ter passado pela ida.
-  assert.match((await loginGoogle({ aud: 'outro-app' })).html, /aviso=google-erro/);
-  assert.match((await loginGoogle({ email_verified: false })).html, /aviso=google-erro/);
-  const semIda = await (await fetch(`http://127.0.0.1:39520/api/google/retorno?code=${token()}&state=qualquer`)).text();
-  assert.match(semIda, /aviso=google-cancelado/);
 });

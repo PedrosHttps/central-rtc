@@ -27,13 +27,32 @@ $t0 = Get-Date '2026-01-01 12:00'
 if (-not (PodeAnalisar @() $t0) -or (PodeAnalisar @(1..10 | ForEach-Object { $t0.AddMinutes(-$_) }) $t0) -or
     -not (PodeAnalisar @(1..10 | ForEach-Object { $t0.AddMinutes(-60 - $_) }) $t0)) { throw 'PodeAnalisar está errada' }
 
+# Cópia diária das contas para fora do Docker: se o volume se perder, as contas voltam daqui (ficam as 30 últimas).
+$copias = Join-Path $pasta 'copias-contas'
+function CopiarContas {
+  New-Item -ItemType Directory -Force $copias | Out-Null
+  $destino = Join-Path $copias "usuarios-$(Get-Date -Format 'yyyy-MM-dd').json"
+  $noWsl = '/mnt/' + $destino.Substring(0, 1).ToLower() + $destino.Substring(2).Replace('\', '/')
+  & wsl.exe -e docker cp central-rtc-painel-1:/app/dados/usuarios.json $noWsl 2>&1 | Out-Null
+  if ($LASTEXITCODE -ne 0) { return $false }
+  Get-ChildItem $copias -Filter 'usuarios-*.json' | Sort-Object Name -Descending | Select-Object -Skip 30 | Remove-Item
+  $true
+}
+
 Set-Location $pasta
 [Console]::OutputEncoding = [Text.Encoding]::UTF8  # a saída do claude é UTF-8; sem isso os acentos quebram no log
 Registrar 'vigia iniciado'
 $jaAnalisada = '[]'
 $analises = @()
 $avisouLimite = $false
+$copiaFeita = $null
+$avisouCopia = $null
 while ($true) {
+  $hoje = (Get-Date).Date
+  if ($copiaFeita -ne $hoje) {
+    if (CopiarContas) { $copiaFeita = $hoje; Registrar 'cópia das contas salva' }
+    elseif ($avisouCopia -ne $hoje) { Registrar 'não consegui copiar as contas; tento de novo no próximo minuto'; $avisouCopia = $hoje }
+  }
   $fila = Fila
   if ($LASTEXITCODE -ne 0) {
     Start-Sleep -Seconds 600  # painel fora do ar: tenta de novo em 10 minutos

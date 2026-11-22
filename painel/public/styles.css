@@ -456,9 +456,6 @@ dl.chaves dd { overflow-wrap: anywhere; }
 .entrada .marca { margin-bottom: 1.5rem; padding-bottom: 1rem; border-bottom: 2px solid var(--tinta); }
 .entrada h1 { font-size: 1.75rem; margin-bottom: 1rem; }
 .entrada .acoes { margin-bottom: 1rem; }
-.ou { display: flex; align-items: center; gap: 0.75rem; margin: 0.25rem 0 0.75rem; color: var(--grafite); font-size: 0.875rem; }
-.ou::before, .ou::after { content: ""; flex: 1; border-top: 1px solid var(--linha); }
-.botao-google { display: block; width: 100%; text-align: center; text-decoration: none; margin-bottom: 1rem; }
 
 .conta { display: flex; flex-wrap: wrap; align-items: center; gap: 0.25rem 0.5rem; font-size: 0.9375rem; }
 .conta-nome { color: var(--grafite); }

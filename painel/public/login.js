@@ -1,4 +1,4 @@
-// Tela de login: entra e volta para o painel. Mostra o botão do Google e o contato do administrador quando o servidor tem.
+// Tela de login: entra e volta para o painel. Mostra o contato do administrador quando o servidor tem.
 
 const form = document.querySelector('#form-entrar');
 const caixaErro = document.querySelector('#erro-entrar');
@@ -7,17 +7,6 @@ function mostrarErro(texto) {
   caixaErro.textContent = texto;
   caixaErro.hidden = false;
 }
-
-// Avisos de quem voltou do login com Google.
-const AVISOS = {
-  pendente: 'Sua conta ainda está em análise. Normalmente leva 1 a 2 minutos.',
-  recusado: 'Seu pedido de acesso foi recusado.',
-  'google-cancelado': 'O login com Google foi cancelado ou expirou. Tente de novo.',
-  'google-erro': 'Não foi possível confirmar sua conta Google. Tente de novo.',
-  'google-email': 'Esse e-mail do Google não pode ser usado como usuário. Use o cadastro com senha.',
-};
-const aviso = AVISOS[new URLSearchParams(location.search).get('aviso')];
-if (aviso) mostrarErro(aviso);
 
 form.addEventListener('submit', async (ev) => {
   ev.preventDefault();
@@ -44,11 +33,12 @@ form.addEventListener('submit', async (ev) => {
 
 fetch('/api/acesso')
   .then((r) => r.json())
-  .then(({ email, google }) => {
-    document.querySelector('#entrar-google').hidden = !google;
+  .then(({ email }) => {
     if (!email) return;
     document.querySelector('#link-pedir-acesso').href = `mailto:${email}?subject=${encodeURIComponent('Central RTC')}`;
+    document.querySelector('#link-esqueci').href = `mailto:${email}?subject=${encodeURIComponent('Central RTC: esqueci a senha')}`;
     document.querySelector('#pedir-acesso').hidden = false;
+    document.querySelector('#esqueci').hidden = false;
   })
   .catch(() => {});
 

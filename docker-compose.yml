@@ -50,10 +50,6 @@ services:
       PAINEL_EMAIL_ACESSO: ${PAINEL_EMAIL_ACESSO:-}
       # Chave da revisão automática de pedidos de conta (só lista pedidos e aprova/recusa).
       PAINEL_TOKEN_REVISAO: ${PAINEL_TOKEN_REVISAO:-}
-      # Login com Google (opcional): app OAuth do Google Cloud + endereço https público do painel.
-      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
-      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-}
-      PAINEL_URL: ${PAINEL_URL:-}
     volumes:
       - contas:/app/dados  # usuários cadastrados (só o hash das senhas)
     ports:
