@@ -1,7 +1,8 @@
 // Testes das bibliotecas compartilhadas e do login do painel (rodam sem os serviços): npm run teste
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { spawn } from 'node:child_process';
+import { execFileSync, spawn } from 'node:child_process';
+import tls from 'node:tls';
 import { createHash } from 'node:crypto';
 import http from 'node:http';
 import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
@@ -199,7 +200,7 @@ test('Painel: login, cadastro de usuários e troca da senha provisória', async 
   assert.equal((await pedir('/status')).status, 401);
   assert.equal((await pedir('/svc/rg/versao')).status, 401);
   assert.equal((await pedir('/login.html')).status, 200);
-  assert.deepEqual(await (await pedir('/api/acesso')).json(), { email: 'acesso@exemplo.com' });
+  assert.deepEqual(await (await pedir('/api/acesso')).json(), { email: 'acesso@exemplo.com', redefinir: false });
 
   assert.equal((await entrar('ana', 'errada')).status, 401);
   assert.equal((await entrar('ninguem', 'senha-de-teste-123')).status, 401);
@@ -368,4 +369,77 @@ test('Painel: senha com especial, nome e empresa únicos, monitor do administrad
     ['carla@x.com', 'Conta criada'],
     ['carla@x.com', 'A senha precisa ter pelo menos um caractere especial'],
   ]);
+});
+
+// Servidor de e-mail falso com TLS (certificado do openssl): guarda cada mensagem recebida.
+async function smtpFalso(t) {
+  const pasta = mkdtempSync(path.join(tmpdir(), 'central-rtc-smtp-'));
+  const [chave, cert] = [path.join(pasta, 'chave.pem'), path.join(pasta, 'cert.pem')];
+  execFileSync('openssl', ['req', '-x509', '-newkey', 'rsa:2048', '-nodes', '-keyout', chave, '-out', cert, '-days', '1', '-subj', '/CN=localhost', '-addext', 'subjectAltName=DNS:localhost'], { stdio: 'ignore' });
+  const recebidas = [];
+  const servidor = tls.createServer({ key: readFileSync(chave), cert: readFileSync(cert) }, (s) => {
+    let dados = null;
+    s.write('220 falso\r\n');
+    s.on('data', (d) => {
+      const texto = String(d);
+      if (dados !== null) {
+        dados += texto;
+        if (dados.endsWith('\r\n.\r\n')) recebidas.push(dados), (dados = null), s.write('250 ok\r\n');
+      } else if (texto.startsWith('EHLO')) s.write('250-falso\r\n250 AUTH PLAIN\r\n');
+      else if (texto.startsWith('AUTH')) s.write('235 ok\r\n');
+      else if (texto.startsWith('DATA')) (dados = ''), s.write('354 manda\r\n');
+      else if (texto.startsWith('QUIT')) s.end('221 tchau\r\n');
+      else s.write('250 ok\r\n');
+    });
+  });
+  await new Promise((ok) => servidor.listen(0, '127.0.0.1', ok));
+  t.after(() => { servidor.close(); rmSync(pasta, { recursive: true, force: true }); });
+  const extras = { SMTP_HOST: 'localhost', SMTP_PORTA: String(servidor.address().port), SMTP_USUARIO: 'painel@x.com', SMTP_SENHA: 'senha-app', PAINEL_ENDERECO: 'https://painel.exemplo/', NODE_EXTRA_CA_CERTS: cert };
+  return { extras, recebidas };
+}
+
+test('Painel: senha esquecida com link por e-mail', async (t) => {
+  let temOpenssl = true;
+  try { execFileSync('openssl', ['version'], { stdio: 'ignore' }); } catch { temOpenssl = false; }
+  if (!temOpenssl) return t.skip('sem openssl para o certificado do servidor de e-mail falso');
+  const { extras, recebidas } = await smtpFalso(t);
+  const ativa = { status: 'ativo', criadoEm: new Date().toISOString(), pedido: { nome: 'Eva Reis', empresa: '' } };
+  const { pedir, entrar } = await subirPainel(t, 39523, extras, { 'eva@x.com': ativa, 'pendente@x.com': { ...ativa, status: 'pendente' } });
+  const esqueci = (email, ip = '10.0.4.1') => pedir('/api/esqueci', { metodo: 'POST', corpo: { email }, ip });
+  const redefinir = (token, senha) => pedir('/api/redefinir', { metodo: 'POST', corpo: { token, senha } });
+  const esperar = async (n) => { for (let i = 0; i < 50 && recebidas.length < n; i++) await new Promise((ok) => setTimeout(ok, 50)); };
+
+  assert.equal((await (await pedir('/api/acesso')).json()).redefinir, true);
+  assert.equal((await pedir('/senha.html')).status, 200);
+
+  // Conta que não existe, pendente ou o administrador: mesma resposta e nenhum e-mail.
+  const respostas = await Promise.all(['ninguem@x.com', 'pendente@x.com', 'ana'].map(async (e) => [(await esqueci(e)).status, (await (await esqueci(e, '10.0.4.2')).json()).mensagem]));
+  const [, generica] = respostas[0];
+  for (const [status, mensagem] of respostas) assert.deepEqual([status, mensagem], [200, generica]);
+
+  assert.equal((await esqueci('EVA@x.com')).status, 200);
+  await esperar(1);
+  // Pedir de novo logo em seguida não manda outro e-mail.
+  assert.equal((await esqueci('eva@x.com', '10.0.4.3')).status, 200);
+  await new Promise((ok) => setTimeout(ok, 300));
+  assert.equal(recebidas.length, 1);
+  const corpo = Buffer.from(recebidas[0].split('\r\n\r\n')[1].replace(/\r\n\.\r\n$/, ''), 'base64').toString('utf8');
+  assert.match(recebidas[0], /^To: <eva@x\.com>/m);
+  const token = /https:\/\/painel\.exemplo\/senha\.html#([\w-]+)/.exec(corpo)?.[1];
+  assert.ok(token, corpo);
+
+  const sessaoVelha = (await entrar('eva@x.com', 'qualquer', '10.0.4.9')).sessao;
+  assert.equal(sessaoVelha, undefined); // ela não sabe a senha antiga
+  assert.equal((await redefinir('token-inventado', 'senha-nova-da-eva!')).status, 400);
+  const fraca = await redefinir(token, 'senhasemespecial');
+  assert.equal(fraca.status, 400);
+  assert.match((await fraca.json()).mensagem, /especial/);
+  assert.equal((await redefinir(token, 'senha-nova-da-eva!')).status, 200);
+  assert.equal((await entrar('eva@x.com', 'senha-nova-da-eva!', '10.0.4.9')).status, 200);
+  // O link só vale uma vez.
+  assert.equal((await redefinir(token, 'outra-senha-da-eva!')).status, 400);
+
+  // No máximo 5 pedidos por hora do mesmo endereço.
+  for (let i = 0; i < 5; i++) await esqueci(`x${i}@x.com`, '10.0.4.7');
+  assert.equal((await esqueci('x9@x.com', '10.0.4.7')).status, 429);
 });

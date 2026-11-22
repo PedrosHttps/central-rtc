@@ -50,6 +50,10 @@ services:
       PAINEL_EMAIL_ACESSO: ${PAINEL_EMAIL_ACESSO:-}
       # Chave da revisão automática de pedidos de conta (só lista pedidos e aprova/recusa).
       PAINEL_TOKEN_REVISAO: ${PAINEL_TOKEN_REVISAO:-}
+      # "Esqueceu a senha?" por e-mail: endereço público do painel e a conta de envio (no Gmail, uma senha de app).
+      PAINEL_ENDERECO: ${PAINEL_ENDERECO:-}
+      SMTP_USUARIO: ${SMTP_USUARIO:-}
+      SMTP_SENHA: ${SMTP_SENHA:-}
     volumes:
       - contas:/app/dados  # usuários cadastrados (só o hash das senhas)
     ports:

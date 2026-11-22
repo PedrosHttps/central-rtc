@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Senha nova · Central RTC</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect x='3' y='3' width='26' height='26' rx='3' fill='none' stroke='%235A2D82' stroke-width='3'/%3E%3Cpath d='M9 12h14M9 17h14M9 22h8' stroke='%2315253A' stroke-width='2.5'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="styles.css">
+  <link rel="preload" href="fontes/barlow-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="fontes/barlow-semi-condensed-latin-600-normal.woff2" as="font" type="font/woff2" crossorigin>
+  <script type="module" src="senha.js"></script>
+</head>
+<body class="pagina-entrada">
+  <main class="entrada">
+    <div class="marca">
+      <span class="marca-nome">Central RTC</span>
+      <span class="marca-sub">Calculadoras da reforma tributária e DANFSe, num lugar só</span>
+    </div>
+
+    <form id="form-pedir" novalidate>
+      <h1>Esqueceu a senha?</h1>
+      <p class="nota">Digite o e-mail da sua conta. Mandamos um link para você criar uma senha nova.</p>
+      <div class="ficha">
+        <label class="campo campo-largo"><span>E-mail</span>
+          <input name="email" type="email" autocomplete="username" inputmode="email" autocapitalize="none" autocorrect="off" spellcheck="false" maxlength="64" required>
+        </label>
+      </div>
+      <div class="mensagem" role="status" hidden></div>
+      <div class="acoes">
+        <button type="submit" class="botao botao-principal">Enviar link</button>
+      </div>
+    </form>
+
+    <form id="form-nova" novalidate hidden>
+      <h1>Crie uma senha nova</h1>
+      <div class="ficha">
+        <label class="campo campo-largo"><span>Senha nova (12 caracteres ou mais, com um especial como ! @ # $ %)</span>
+          <input name="senha" type="password" autocomplete="new-password" required>
+        </label>
+        <label class="campo campo-largo"><span>Repita a senha</span>
+          <input name="repetida" type="password" autocomplete="new-password" required>
+        </label>
+      </div>
+      <div class="mensagem" role="status" hidden></div>
+      <div class="acoes">
+        <button type="submit" class="botao botao-principal">Salvar senha nova</button>
+      </div>
+    </form>
+
+    <nav class="entrada-links" aria-label="Ajuda">
+      <a href="login.html">Voltar para o login</a>
+      <a href="https://pedroshttps.github.io/central-rtc/privacidade.html" target="_blank" rel="noopener">Privacidade (LGPD)</a>
+    </nav>
+  </main>
+</body>
+</html>

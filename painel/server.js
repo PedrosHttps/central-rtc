@@ -6,6 +6,7 @@ import { createHash, randomBytes, scrypt as scryptCb, timingSafeEqual } from 'no
 import { mkdirSync, readFileSync, renameSync, writeFileSync } from 'node:fs';
 import { readFile, stat } from 'node:fs/promises';
 import path from 'node:path';
+import tls from 'node:tls';
 import { fileURLToPath } from 'node:url';
 import { promisify } from 'node:util';
 import { brotliCompressSync, constants as zlib, gzipSync } from 'node:zlib';
@@ -230,6 +231,87 @@ async function trocarSenha(req, res, sessao, ip) {
   return responderJson(res, 200, { mensagem: 'Senha trocada.' });
 }
 
+// ---------------------------------------------------------------- senha nova por e-mail
+
+// Com SMTP_USUARIO + SMTP_SENHA (no Gmail, uma "senha de app") e PAINEL_ENDERECO, quem esqueceu a senha recebe um link por e-mail.
+const SMTP_HOST = process.env.SMTP_HOST || 'smtp.gmail.com';
+const SMTP_PORTA = Number(process.env.SMTP_PORTA || 465);
+const SMTP_USUARIO = process.env.SMTP_USUARIO || '';
+const SMTP_SENHA = process.env.SMTP_SENHA || '';
+// Endereço fixo: o link nunca sai do cabeçalho Host, que qualquer um pode forjar para roubar o link.
+const ENDERECO = (process.env.PAINEL_ENDERECO || '').replace(/\/+$/, '');
+const COM_REDEFINIR = Boolean(SMTP_USUARIO && SMTP_SENHA && ENDERECO);
+const LINK_MS = 30 * 60 * 1000;
+const links = new Map(); // resumo do token → { nome, criadoEm, expira }; só na memória, como as sessões
+const esqueciPorIp = new Map(); // endereço → { n, desde }
+
+// Cliente SMTP mínimo: TLS direto e AUTH PLAIN. O corpo vai em base64, então acentos e linhas com "." não quebram a mensagem.
+function enviarEmail(para, assunto, texto) {
+  const b64 = (s) => Buffer.from(s).toString('base64');
+  const mensagem = [
+    `From: Central RTC <${SMTP_USUARIO}>`, `To: <${para}>`, `Subject: =?UTF-8?B?${b64(assunto)}?=`,
+    `Date: ${new Date().toUTCString()}`, 'MIME-Version: 1.0', 'Content-Type: text/plain; charset=UTF-8',
+    'Content-Transfer-Encoding: base64', '', b64(texto).match(/.{1,76}/g).join('\r\n'), '.',
+  ].join('\r\n');
+  const passos = ['EHLO central-rtc', `AUTH PLAIN ${b64(`\0${SMTP_USUARIO}\0${SMTP_SENHA}`)}`, `MAIL FROM:<${SMTP_USUARIO}>`, `RCPT TO:<${para}>`, 'DATA', mensagem, 'QUIT'];
+  return new Promise((ok, falha) => {
+    const s = tls.connect({ host: SMTP_HOST, port: SMTP_PORTA, servername: SMTP_HOST });
+    let resposta = '';
+    s.setTimeout(20000, () => s.destroy(new Error('o servidor de e-mail não respondeu')));
+    s.on('error', falha);
+    s.on('close', () => falha(new Error('o servidor de e-mail fechou a conexão antes do fim')));
+    s.on('data', (d) => {
+      resposta += d;
+      const ultima = resposta.split('\r\n').at(-2) || '';
+      if (!/^\d{3} /.test(ultima)) return; // resposta de várias linhas ainda chegando
+      resposta = '';
+      if (/^[45]/.test(ultima)) return s.destroy(new Error(`servidor de e-mail: ${ultima}`));
+      if (!passos.length) return ok(s.end());
+      s.write(`${passos.shift()}\r\n`);
+    });
+  });
+}
+
+async function esqueci(req, res, ip) {
+  if (!COM_REDEFINIR) throw erro(503, 'O envio de e-mail não está ligado neste painel. Fale com o administrador.');
+  const nome = textoLimpo((await lerJson(req)).email, 64).toLowerCase();
+  const agora = Date.now();
+  const c = esqueciPorIp.get(ip);
+  if (c && agora - c.desde < 60 * 60 * 1000) {
+    if (c.n >= 5) throw erro(429, 'Muitos pedidos deste endereço. Tente de novo daqui a uma hora.');
+    c.n++;
+  } else esqueciPorIp.set(ip, { n: 1, desde: agora });
+  if (esqueciPorIp.size > 10000) esqueciPorIp.clear(); // shortcut: mesmo limite do bloqueio de senha
+
+  for (const [t, l] of links) if (l.expira < agora) links.delete(t);
+  // Um e-mail por conta a cada 2 minutos: ninguém usa o painel para encher a caixa de outra pessoa.
+  const recente = [...links.values()].some((l) => l.nome === nome && agora - l.criadoEm < 2 * 60 * 1000);
+  if (nome !== ADMIN && EMAIL_VALIDO.test(nome) && estaAtivo(nome) && !recente) {
+    for (const [t, l] of links) if (l.nome === nome) links.delete(t); // só o link mais novo vale
+    const token = randomBytes(32).toString('base64url');
+    links.set(resumo(token).toString('hex'), { nome, criadoEm: agora, expira: agora + LINK_MS });
+    const texto = `Alguém pediu uma senha nova para a sua conta na Central RTC.\n\nPara criar a senha nova, abra este link em até 30 minutos:\n${ENDERECO}/senha.html#${token}\n\nSe não foi você, ignore este e-mail: a sua senha continua a mesma.\n`;
+    // Sem await: a resposta sai no mesmo tempo com ou sem conta, e não revela quem tem conta.
+    enviarEmail(nome, 'Central RTC: crie uma senha nova', texto).catch((e) => console.error(`E-mail de senha nova não saiu: ${e.message}`));
+  }
+  return responderJson(res, 200, { mensagem: 'Se esse e-mail tiver uma conta ativa, enviamos um link para criar uma senha nova. Ele vale por 30 minutos. Confira também a caixa de spam.' });
+}
+
+async function redefinirSenha(req, res) {
+  const { token, senha } = await lerJson(req);
+  const chave = resumo(String(token || '')).toString('hex');
+  const link = links.get(chave);
+  const vencido = () => erro(400, 'Esse link venceu ou já foi usado. Peça outro em "Esqueceu a senha?".');
+  if (!link || link.expira < Date.now() || !estaAtivo(link.nome)) throw vencido();
+  validarSenha(senha);
+  const hash = await gerarHash(senha);
+  if (!links.delete(chave)) throw vencido(); // dois envios ao mesmo tempo: só o primeiro vale
+  usuarios[link.nome] = { ...usuarios[link.nome], ...hash, trocarSenha: false };
+  salvarUsuarios();
+  encerrarSessoesDe(link.nome); // quem estava com a conta aberta em outro aparelho sai
+  return responderJson(res, 200, { mensagem: 'Senha nova salva. Já pode entrar com ela.' });
+}
+
 // ---------------------------------------------------------------- pedidos de conta (cadastro pela própria pessoa)
 
 const MAX_PENDENTES = 100;
@@ -392,7 +474,7 @@ async function rotasDeUsuarios(req, res, caminho) {
 }
 
 // Arquivos que as telas de login e de cadastro precisam antes de alguém entrar.
-const PUBLICOS = /^\/(login\.html|login\.js|cadastro\.html|cadastro\.js|styles\.css|fontes\/[\w.-]+)$/;
+const PUBLICOS = /^\/(login\.html|login\.js|cadastro\.html|cadastro\.js|senha\.html|senha\.js|styles\.css|fontes\/[\w.-]+)$/;
 const RESUMO_TOKEN = TOKEN_REVISAO ? resumo(TOKEN_REVISAO) : null;
 
 // A revisão automática se identifica com "Authorization: Bearer <PAINEL_TOKEN_REVISAO>".
@@ -408,9 +490,11 @@ async function controlarAcesso(req, res, caminho) {
     return caminho.startsWith('/api/') ? responderJson(res, 404, { mensagem: 'Não encontrado.' }) : true;
   }
   const ip = ipDe(req);
-  if (caminho === '/api/acesso' && req.method === 'GET') return responderJson(res, 200, { email: EMAIL_ACESSO || null });
+  if (caminho === '/api/acesso' && req.method === 'GET') return responderJson(res, 200, { email: EMAIL_ACESSO || null, redefinir: COM_REDEFINIR });
   if (caminho === '/api/entrar' && req.method === 'POST') return entrar(req, res, ip);
   if (caminho === '/api/cadastro' && req.method === 'POST') return cadastrar(req, res, ip);
+  if (caminho === '/api/esqueci' && req.method === 'POST') return esqueci(req, res, ip);
+  if (caminho === '/api/redefinir' && req.method === 'POST') return redefinirSenha(req, res);
   if (PUBLICOS.test(caminho) && req.method === 'GET') return true;
 
   const decisao = caminho.match(/^\/api\/usuarios\/([^/]+)\/(aprovar|recusar)$/);

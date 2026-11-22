@@ -33,14 +33,20 @@ form.addEventListener('submit', async (ev) => {
 
 fetch('/api/acesso')
   .then((r) => r.json())
-  .then(({ email }) => {
+  .then(({ email, redefinir }) => {
+    const esqueci = document.querySelector('#link-esqueci');
+    // Com o envio de e-mail ligado, a pessoa cria a senha nova sozinha; sem ele, pede ao administrador.
+    if (redefinir) {
+      esqueci.href = 'senha.html';
+      esqueci.hidden = false;
+    }
     if (!email) return;
     const ajuda = document.querySelector('#link-ajuda');
-    const esqueci = document.querySelector('#link-esqueci');
     ajuda.href = `mailto:${email}?subject=${encodeURIComponent('Central RTC')}`;
-    // O aviso de escrever do e-mail da conta vai no corpo da mensagem, não na tela.
+    ajuda.hidden = false;
+    if (redefinir) return;
     esqueci.href = `mailto:${email}?subject=${encodeURIComponent('Central RTC: esqueci a senha')}&body=${encodeURIComponent('Escrevo do e-mail da minha conta e peço uma senha nova.')}`;
-    ajuda.hidden = esqueci.hidden = false;
+    esqueci.hidden = false;
   })
   .catch(() => {});
 

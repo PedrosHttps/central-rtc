@@ -143,7 +143,7 @@ Com o login ligado, há dois caminhos para alguém ganhar acesso:
 
 Os pedidos são aprovados ou recusados pelo administrador, também em **Usuários**, ou por uma revisão automática que usa a chave `PAINEL_TOKEN_REVISAO`. Por exemplo, uma tarefa agendada do Claude Code que lê os pedidos e decide seguindo regras escritas. A tela mostra quem decidiu e por quê. Em **Usuários**, o administrador também gera uma senha provisória nova para quem esqueceu e remove o acesso de quem saiu. Quem é removido sai na hora.
 
-**Esqueceu a senha:** a tela de login tem o link "Esqueceu a senha?", que abre um e-mail para `PAINEL_EMAIL_ACESSO`. Responda só se o pedido vier do mesmo e-mail da conta: em **Usuários**, gere uma senha provisória e mande para a pessoa. No primeiro acesso o painel obriga a trocar.
+**Esqueceu a senha:** com `PAINEL_ENDERECO`, `SMTP_USUARIO` e `SMTP_SENHA` no `.env`, o link "Esqueceu a senha?" do login abre `senha.html`. A pessoa digita o e-mail da conta e recebe um link que vale 30 minutos e uma vez só. Ela cria a senha nova sozinha, e as sessões abertas dela caem. A resposta é a mesma com ou sem conta. Cada conta recebe no máximo um e-mail a cada 2 minutos, e cada endereço de internet faz até 5 pedidos por hora. Contas em análise e o administrador não recebem link. No Gmail, `SMTP_SENHA` é uma senha de app (myaccount.google.com/apppasswords, que exige a verificação em duas etapas). Sem essas variáveis, o link abre um e-mail para `PAINEL_EMAIL_ACESSO`: aí o administrador gera uma senha provisória em **Usuários**, e o painel obriga a trocar no primeiro acesso.
 
 Senhas precisam ter 12 caracteres ou mais e pelo menos um caractere especial (como `! @ # $ %`). Cada e-mail, cada nome e cada empresa só podem ter uma conta: maiúsculas, acentos e espaços não contam como diferença, e pedidos recusados não ocupam o nome. Depois de 10 senhas erradas em 15 minutos, o endereço de internet fica sem conseguir entrar por 15 minutos. As sessões duram 12 horas e só existem na memória: reiniciar o painel pede login de novo a todos.
 
@@ -156,7 +156,7 @@ O administrador tem o botão **Monitor**, que abre `/admin.html`. A página most
 O aviso de privacidade fica em [`docs/privacidade.html`](https://pedroshttps.github.io/central-rtc/privacidade.html), com link no rodapé de todas as telas. Para cumprir os prazos que ele promete:
 
 - pedidos recusados são apagados 30 dias depois da decisão (ao subir o painel e a cada 6 horas);
-- sessões, tentativas de cadastro e bloqueios ficam só na memória;
+- sessões, tentativas de cadastro, bloqueios e links de senha nova ficam só na memória;
 - o `vigia-pedidos.ps1` grava um registro por mês (`revisao-pedidos-AAAA-MM.log`) e guarda só os 3 últimos;
 - as cópias das contas ficam 30 dias.
 

@@ -48,6 +48,7 @@
               <tr><td data-rotulo="Dado: ">Endereço de internet (IP) e tipo de navegador de quem está conectado</td><td data-rotulo="Para quê: ">Segurança e monitoramento de acessos pelo administrador</td><td data-rotulo="Tempo: ">A sessão dura até 12 horas; o registro fica só na memória, até o painel reiniciar</td></tr>
               <tr><td data-rotulo="Dado: ">Tentativas de cadastro (IP, e-mail, nome, empresa e resultado)</td><td data-rotulo="Para quê: ">Detectar robôs e abusos</td><td data-rotulo="Tempo: ">Só na memória, as 200 mais recentes; somem quando o servidor reinicia</td></tr>
               <tr><td data-rotulo="Dado: ">IP de quem erra a senha</td><td data-rotulo="Para quê: ">Bloquear quem tenta adivinhar senhas</td><td data-rotulo="Tempo: ">O bloqueio dura 15 minutos; o registro fica só na memória, até o painel reiniciar</td></tr>
+              <tr><td data-rotulo="Dado: ">Link de senha nova (quando você usa "Esqueceu a senha?")</td><td data-rotulo="Para quê: ">Deixar só o dono do e-mail criar uma senha nova</td><td data-rotulo="Tempo: ">Vale 30 minutos e uma vez só; fica só na memória</td></tr>
               <tr><td data-rotulo="Dado: ">Registro da checagem automática (nome, e-mail e decisão)</td><td data-rotulo="Para quê: ">Conferir se a checagem está funcionando</td><td data-rotulo="Tempo: ">Até 3 meses</td></tr>
               <tr><td data-rotulo="Dado: ">Cópias de segurança das contas</td><td data-rotulo="Para quê: ">Recuperar as contas se o servidor falhar</td><td data-rotulo="Tempo: ">30 dias</td></tr>
             </tbody>
@@ -77,6 +78,7 @@
         <ul>
           <li><strong>Anthropic</strong> (Estados Unidos): recebe nome, e-mail e empresa de cada pedido de conta, só para a checagem contra robôs.</li>
           <li><strong>Tailscale</strong> (Estados Unidos): a conexão com a ferramenta passa pela rede dela, criptografada de ponta a ponta. A Tailscale não tem acesso ao conteúdo.</li>
+          <li><strong>Google</strong> (Estados Unidos): o e-mail com o link de senha nova sai por uma conta do Gmail. O Google recebe só o seu e-mail e essa mensagem.</li>
           <li><strong>GitHub</strong> (Estados Unidos): hospeda esta página e a página do projeto. Não recebe nenhum dado da sua conta.</li>
         </ul>
         <p>Por isso há transferência internacional de dados, feita para executar o serviço que você pediu (art. 33, IX da LGPD). As calculadoras da Receita rodam no próprio servidor da Central RTC: nada do que você calcula é enviado à Receita Federal. Não vendemos nem cedemos dados para publicidade.</p>
