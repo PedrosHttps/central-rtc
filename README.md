@@ -130,7 +130,7 @@ No Windows, use o Agendador de Tarefas com o programa `node` e os argumentos `cl
 | `PORTA` | `3000` | Porta do painel |
 | `HOST` | `127.0.0.1` | Interface do painel (`0.0.0.0` só dentro do Docker) |
 | `PAINEL_USUARIO` e `PAINEL_SENHA` | vazias (sem login) | Ligam a tela de login. Essa é a conta do administrador, que cadastra as outras pessoas. Obrigatórias antes de deixar o painel acessível por outros aparelhos. A senha precisa ter 12 caracteres ou mais. No Docker, coloque as duas no arquivo `.env` da raiz, que fica fora do Git. |
-| `PAINEL_EMAIL_ACESSO` | vazia | E-mail do suporte, usado pelo link "Contatar suporte" da tela de login (o endereço não aparece na tela). Vazia, o link não aparece. |
+| `PAINEL_EMAIL_ACESSO` | vazia | E-mail do administrador, usado no "Esqueceu a senha?" quando o envio por e-mail (SMTP) está desligado. O "Contatar suporte" do login leva à seção de contato do aviso de privacidade. |
 | `PAINEL_TOKEN_REVISAO` | vazia | Chave (32 caracteres ou mais) da revisão automática de pedidos. Com `Authorization: Bearer <chave>` só dá para `GET /api/pedidos` e `POST /api/usuarios/<e-mail>/aprovar` ou `recusar`. |
 | `PAINEL_DADOS` | `painel/dados` | Pasta do `usuarios.json`, com as contas cadastradas (só o hash das senhas). No Docker fica no volume `contas`. |
 

@@ -42,11 +42,7 @@ fetch('/api/acesso')
       esqueci.href = 'senha.html';
       esqueci.hidden = false;
     }
-    if (!email) return;
-    const ajuda = document.querySelector('#link-ajuda');
-    ajuda.href = `mailto:${email}?subject=${encodeURIComponent('Central RTC')}`;
-    ajuda.hidden = false;
-    if (redefinir) return;
+    if (!email || redefinir) return;
     esqueci.href = `mailto:${email}?subject=${encodeURIComponent('Central RTC: esqueci a senha')}&body=${encodeURIComponent('Escrevo do e-mail da minha conta e peço uma senha nova.')}`;
     esqueci.hidden = false;
   })
