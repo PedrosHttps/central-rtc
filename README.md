@@ -4,6 +4,7 @@
 
 **As calculadoras da Reforma Tributária do Consumo e o gerador de DANFSe da Receita Federal, num painel só.**
 
+[![Versão](https://img.shields.io/github/v/release/PedrosHttps/central-rtc?label=vers%C3%A3o&color=1a2a66)](https://github.com/PedrosHttps/central-rtc/releases/latest)
 [![Testes](https://github.com/PedrosHttps/central-rtc/actions/workflows/testes.yml/badge.svg)](https://github.com/PedrosHttps/central-rtc/actions/workflows/testes.yml)
 [![Licença MIT](https://img.shields.io/badge/licen%C3%A7a-MIT-5a2d82)](LICENSE)
 [![Node 22+](https://img.shields.io/badge/node-22%2B-15253a)](painel/package.json)
@@ -12,6 +13,7 @@
 **Disponível online: [central-rtc.taild4c7a5.ts.net](https://central-rtc.taild4c7a5.ts.net)** (peça uma conta na tela de entrada)
 
 [Página do projeto](https://pedroshttps.github.io/central-rtc/) ·
+[Versão 1.0](https://github.com/PedrosHttps/central-rtc/releases/latest) ·
 [Guia de uso](https://pedroshttps.github.io/central-rtc/guia.html) ([PDF](https://pedroshttps.github.io/central-rtc/guia-central-rtc.pdf)) ·
 [Instalar](#como-rodar-com-docker) ·
 [Linha de comando](#linha-de-comando) ·
