@@ -13,6 +13,7 @@ import { lerCSV, gerarCSV } from '../public/lib/csv.js';
 import { decimal, numero, dataISO, dataHoraISO, decimalBR } from '../public/lib/formato.js';
 import { criarZip, crc32, nomeUnico } from '../public/lib/zip.js';
 import { prepararLote, executarLote, operacaoSimples, operacaoRegimeGeral, itensRegimeGeral } from '../public/lib/rtc.js';
+import { lerNFe, v, busca, code128C } from '../public/lib/danfe.js';
 
 test('CSV: detecta ";" e lida com aspas, BOM e linhas vazias', () => {
   const { linhas, separador } = lerCSV('﻿a;b;c\r\n1;"x;y";"diz ""oi"""\r\n\r\n2;;3\r\n');
@@ -79,6 +80,31 @@ test('ZIP: estrutura e CRC32', () => {
   assert.equal(v.getUint32(zip.length - 22, true), 0x06054b50);
   const usados = new Set();
   assert.deepEqual(['a.pdf', 'a.pdf', 'a.pdf'].map((n) => nomeUnico(n, usados)), ['a.pdf', 'a (2).pdf', 'a (3).pdf']);
+});
+
+test('DANFE: lê a NF-e de exemplo e recusa o que não é NF-e 55', () => {
+  const exemplo = (nome) => readFileSync(new URL(`../exemplos/${nome}`, import.meta.url), 'utf8');
+  const nfe = lerNFe(exemplo('nfe-exemplo.xml'));
+  assert.equal(nfe.chave, '13261112345678000195550010000001231123456780');
+  assert.equal(v(nfe.emit, 'enderEmit', 'xMun'), 'Manaus');
+  assert.equal(nfe.det.length, 2);
+  assert.equal(v(nfe.det[1], 'prod', 'xProd'), 'Mesa de reunião 1,80 m & 6 lugares');
+  assert.equal(v(busca(nfe.total, 'gCBS'), 'vCBS'), '22.05');
+  assert.equal(v(nfe.prot, 'nProt'), '113260000012345');
+  assert.equal(nfe.homologacao, true);
+  assert.equal(lerNFe(exemplo('nfe-exemplo.xml').replace('<cStat>100', '<cStat>110')).prot, null);
+  assert.throws(() => lerNFe(exemplo('nfse-exemplo.xml')), /DANFSe/);
+  assert.throws(() => lerNFe(exemplo('nfe-exemplo.xml').replace('<mod>55', '<mod>65')), /NFC-e/);
+  assert.throws(() => lerNFe('<NFe><infNFe></NFe>'), /XML válido/);
+  assert.throws(() => lerNFe('não é xml'), /XML válido/);
+});
+
+test('DANFE: Code 128C da chave igual ao de outra implementação (ReportLab)', () => {
+  assert.equal(
+    code128C('13261112345678000195550010000001231123456780'),
+    '2112321221323212212312121122321311233311212411122122222221221141133113212122222213122122222122222221223121312312123121311131231411221112421224112331112',
+  );
+  assert.throws(() => code128C('123'), /par/);
 });
 
 test('operação do Simples: texto, cAtivSN com dois dígitos e IS padrão 0.00', () => {

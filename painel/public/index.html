@@ -14,6 +14,7 @@
   <link rel="modulepreload" href="lib/formato.js">
   <link rel="modulepreload" href="lib/zip.js">
   <link rel="modulepreload" href="lib/dom.js">
+  <link rel="modulepreload" href="lib/danfe.js">
   <script type="module" src="app.js"></script>
 </head>
 <body>
@@ -22,7 +23,7 @@
   <header class="topo">
     <div class="marca">
       <span class="marca-nome">Central RTC</span>
-      <span class="marca-sub">Calculadoras da reforma tributária e DANFSe, num lugar só</span>
+      <span class="marca-sub">Calculadoras da reforma tributária, DANFSe e DANFE, num lugar só</span>
     </div>
     <div class="servicos" aria-live="polite">
       <ul id="servicos" class="servicos-lista"></ul>
@@ -45,6 +46,7 @@
       <button type="button" data-secao="rg">Regime geral</button>
       <button type="button" data-secao="consultas">Consultas</button>
       <button type="button" data-secao="danfse">DANFSe</button>
+      <button type="button" data-secao="danfe">DANFE</button>
       <button type="button" data-secao="lote">Em lote</button>
     </nav>
 
@@ -246,6 +248,27 @@
         <iframe id="danfse-previa" class="previa-pdf" title="Pré-visualização do DANFSe" hidden></iframe>
       </section>
 
+      <!-- ============================================================ DANFE -->
+      <section id="secao-danfe" class="secao" hidden>
+        <h1>DANFE</h1>
+        <p class="lead">Transforme XMLs de NF-e (notas de produtos, modelo 55) no DANFE, a versão da nota para imprimir. Não precisa de certificado digital: o DANFE é montado no seu navegador e o XML não sai do computador.</p>
+
+        <label class="soltar" id="danfe-soltar">
+          <input type="file" id="danfe-arquivos" accept=".xml,text/xml,application/xml" multiple>
+          <span class="soltar-titulo">Arraste os XMLs para cá</span>
+          <span class="soltar-sub">ou clique para escolher. Uma nota ou várias de uma vez.</span>
+        </label>
+
+        <div class="acoes">
+          <button type="button" class="botao botao-principal" id="btn-danfe-imprimir" disabled>Imprimir ou salvar em PDF</button>
+          <button type="button" class="botao botao-discreto" id="btn-danfe-limpar" disabled>Limpar lista</button>
+        </div>
+
+        <ul id="danfe-lista" class="lista-arquivos"></ul>
+        <p class="nota">Para ter o PDF, escolha "Salvar como PDF" na janela de impressão. A validade fiscal é sempre a do XML autorizado pela Sefaz; o DANFE só o acompanha.</p>
+        <div id="danfe-folhas" class="danfe-folhas"></div>
+      </section>
+
       <!-- ============================================================ Lote -->
       <section id="secao-lote" class="secao" hidden>
         <h1>Em lote</h1>
@@ -277,7 +300,7 @@
   </div>
 
   <footer class="rodape">
-    <p>As calculadoras e o gerador de DANFSe são projetos de código aberto da Receita Federal. A Central RTC só organiza as chamadas; confira os resultados antes de usá-los em documentos fiscais.</p>
+    <p>As calculadoras e o gerador de DANFSe são projetos de código aberto da Receita Federal. A Central RTC só organiza as chamadas e monta o DANFE das NF-e no navegador; confira os resultados antes de usá-los em documentos fiscais.</p>
     <p>Privacidade: guardamos só o necessário para a sua conta funcionar (nome, e-mail, empresa e a senha embaralhada) e não gravamos planilhas, notas nem resultados. Seus direitos pela LGPD (Lei 13.709/2018) estão no <a href="https://pedroshttps.github.io/central-rtc/privacidade.html" target="_blank" rel="noopener">aviso de privacidade</a>.</p>
   </footer>
 

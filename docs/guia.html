@@ -39,6 +39,7 @@
           <li><a href="#regime-geral">Regime geral, passo a passo</a></li>
           <li><a href="#consultas">Consultas</a></li>
           <li><a href="#danfse">DANFSe: o PDF da nota de serviço</a></li>
+          <li><a href="#danfe">DANFE: a nota de produtos para imprimir</a></li>
           <li><a href="#lote">Muitos itens de uma vez (planilha)</a></li>
           <li><a href="#resultados">Como ler os resultados</a></li>
           <li><a href="#problemas">Problemas comuns</a></li>
@@ -86,6 +87,7 @@
               <tr><td>Calcular o imposto de uma venda de empresa de <strong>Lucro Presumido ou Lucro Real</strong></td><td data-rotulo="Use a tela: "><a href="#regime-geral">Regime geral</a></td></tr>
               <tr><td>Descobrir um código (de produto, de serviço, de classificação) ou entender uma mensagem de erro</td><td data-rotulo="Use a tela: "><a href="#consultas">Consultas</a></td></tr>
               <tr><td>Transformar o XML de uma nota de serviço (NFS-e) em PDF</td><td data-rotulo="Use a tela: "><a href="#danfse">DANFSe</a></td></tr>
+              <tr><td>Imprimir ou salvar em PDF uma nota de produtos (NF-e) a partir do XML</td><td data-rotulo="Use a tela: "><a href="#danfe">DANFE</a></td></tr>
               <tr><td>Calcular dezenas ou centenas de itens de uma vez</td><td data-rotulo="Use a tela: "><a href="#lote">Em lote</a></td></tr>
             </tbody>
           </table>
@@ -144,6 +146,17 @@
         <p class="nota">Use só XMLs de notas já autorizadas, devolvidos pelo sistema da prefeitura ou pelo emissor. Arquivo com problema aparece com o motivo e não atrapalha os outros.</p>
       </section>
 
+      <section id="danfe">
+        <h2>DANFE: a nota de produtos para imprimir</h2>
+        <p>A nota de venda de produtos (NF-e) também é um arquivo <strong>XML</strong>. O <strong>DANFE</strong> é a versão dela para imprimir e acompanhar a mercadoria. Não precisa de certificado digital: o certificado só é usado por quem emite a nota.</p>
+        <ol class="passos">
+          <li><p>Arraste os arquivos XML de NF-e para a área tracejada, ou toque nela para escolher. Pode ser um arquivo ou vários.</p></li>
+          <li><p>Cada nota aparece logo abaixo, já no formato do DANFE. Use <em>Ver</em> para ir até ela.</p></li>
+          <li><p>Toque em <em>Imprimir ou salvar em PDF</em>. Para ter o arquivo, escolha <em>Salvar como PDF</em> no lugar da impressora. Várias notas saem no mesmo PDF, uma por folha.</p></li>
+        </ol>
+        <p class="nota">O DANFE é montado no seu navegador: o XML não é enviado para lugar nenhum. Nota sem autorização da Sefaz, ou de teste (homologação), sai com a faixa "sem valor fiscal". Nota de consumidor (NFC-e, o cupom) não entra aqui.</p>
+      </section>
+
       <section id="lote">
         <h2>Muitos itens de uma vez (planilha)</h2>
         <ol class="passos">
@@ -198,6 +211,7 @@
           <dt>cClassTrib</dt><dd>Código de classificação tributária: diz se o item tem tributação normal, redução, isenção etc. <code>000001</code> é a tributação normal.</dd>
           <dt>CRT</dt><dd>Código de regime tributário da empresa: Simples Nacional, MEI ou regime normal.</dd>
           <dt>CST</dt><dd>Código de situação tributária. Anda junto com o cClassTrib. <code>000</code> é a tributação normal.</dd>
+          <dt>DANFE</dt><dd>Versão para imprimir de uma nota fiscal eletrônica de produtos (NF-e), que acompanha a mercadoria.</dd>
           <dt>DANFSe</dt><dd>PDF de uma nota fiscal de serviço eletrônica (NFS-e), para imprimir ou enviar.</dd>
           <dt>Fato gerador</dt><dd>O momento que faz o imposto existir. Na prática, a data da venda ou do serviço.</dd>
           <dt>IBS</dt><dd>Imposto sobre Bens e Serviços, dos estados e municípios, que substitui ICMS e ISS. Aparece como IBS estadual e IBS municipal.</dd>

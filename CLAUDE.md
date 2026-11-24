@@ -24,8 +24,8 @@ Painel web + linha de comando que usam os três serviços de código aberto da R
   - LGPD: recusados somem 30 dias após a decisão (`limparRecusados`). O aviso fica em `docs/privacidade.html`; mantenha-o igual ao que o código guarda.
   - Públicos: `login.html`, `login.js`, `cadastro.html`, `cadastro.js`, `senha.html`, `senha.js`, `styles.css`, `fontes/`, `/api/acesso`, `/api/entrar`, `/api/cadastro`, `/api/esqueci` e `/api/redefinir`.
 - `painel/cli.js` — comandos `status`, `modelo`, `lote`, `danfse`. Códigos de saída: 0 ok, 1 uso/serviço fora, 2 algum item falhou.
-- `painel/public/lib/` — **código compartilhado entre navegador e Node** (ESM puro): `rtc.js` (cliente, montagem das operações, leitura dos resultados, lote), `csv.js`, `formato.js`, `zip.js`. Não use APIs exclusivas do Node aqui.
-- `painel/public/app.js` + `index.html` + `styles.css` — interface, JS puro, sem build.
+- `painel/public/lib/` — **código compartilhado entre navegador e Node** (ESM puro): `rtc.js` (cliente, montagem das operações, leitura dos resultados, lote), `csv.js`, `formato.js`, `zip.js`, `danfe.js` (leitor de XML sem DOMParser, `lerNFe` e o Code 128C da chave, conferido contra o ReportLab). Não use APIs exclusivas do Node aqui.
+- `painel/public/app.js` + `index.html` + `styles.css` — interface, JS puro, sem build. A seção DANFE não usa serviço: `folhaDanfe` monta a folha A4 em HTML (leiaute retrato do MOC; o cabeçalho fica num `thead` para repetir em cada folha) e o botão chama `print()` com a classe `imprimindo-danfe` no body, que esconde o resto da página.
 - `painel/dev/mock-servicos.js` — simulador com **dados fictícios** que imita rotas e formatos dos três serviços (marca as respostas com `x-servico-simulado: true`; o painel mostra uma faixa amarela).
 - `painel/dev/lib.test.js` — testes com `node:test`.
 - `docker/java.Dockerfile` — constrói as duas calculadoras Java a partir do GitHub; gera o banco SQLite uma vez com o Flyway do regime regular e copia para as duas imagens.

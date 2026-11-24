@@ -42,6 +42,7 @@ A Central RTC não recalcula nada por conta própria: ela monta as requisições
 - **Regime geral**: calcular CBS, IBS e IS com memória de cálculo, e gerar e validar o XML do grupo de tributação (NF-e, NFC-e, CT-e, BP-e, NF3e).
 - **Consultas**: cClassTrib, NCM, NBS, alíquotas de referência e descrição de códigos de erro.
 - **DANFSe**: arrastar vários XMLs de NFS-e e baixar todos os PDFs num `.zip`.
+- **DANFE**: transformar XMLs de NF-e (modelo 55) no DANFE retrato, montado no próprio navegador, sem certificado digital e sem o XML sair do computador. Para ter o PDF, use "Salvar como PDF" na impressão.
 - **Em lote**: processar uma planilha CSV com centenas de itens e baixar o resultado em CSV (abre direto no Excel) e as respostas completas em JSON.
 
 Tudo isso também roda pela linha de comando, para agendar ou encaixar em outros scripts.
@@ -192,6 +193,7 @@ Use `node cli.js modelo <tipo>` ou o botão **Baixar planilha modelo** para come
 - **Regime geral, a partir de 2027:** as alíquotas nominais são obrigatórias em cada item, e o resultado sai como *cálculo simulado*. Antes de 2027 elas são proibidas, e a calculadora usa as alíquotas de referência de 2026. O painel esconde ou mostra os campos conforme a data.
 - **Simples Nacional:** item sem `cAtivSN` (ou com atividade fora de vigência ou não admitida no documento) não é calculado, sem erro. As alíquotas efetivas (`pIBSSN`, `pCBSSN`) vêm da apuração da empresa.
 - **DANFSe:** é o documento auxiliar de uma NFS-e já autorizada. Use os XMLs que o emissor devolveu. Para testar ou demonstrar, há uma nota fictícia em `painel/exemplos/nfse-exemplo.xml` (sai com a faixa "sem validade jurídica").
+- **DANFE:** é a versão impressa de uma NF-e já autorizada e não precisa de certificado: quem assina é o emissor, na hora de emitir a nota. A Central RTC monta o DANFE (não é um serviço da Receita) no leiaute do Manual de Orientação do Contribuinte, com o quadro de IBS e CBS quando a nota tem esse grupo. XML sem protocolo de autorização, ou emitido em homologação, sai com a faixa "sem valor fiscal". NFC-e (modelo 65) tem outro DANFE, com QR Code, e não entra. Nota fictícia para testar: `painel/exemplos/nfe-exemplo.xml`.
 
 ## Desenvolvimento
 

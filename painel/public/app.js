@@ -7,6 +7,7 @@ import { lerCSV, gerarCSV } from './lib/csv.js';
 import { moeda, percentual } from './lib/formato.js';
 import { criarZip, nomeUnico } from './lib/zip.js';
 import { h } from './lib/dom.js';
+import { lerNFe, v, busca, filho, filhos, code128C } from './lib/danfe.js';
 
 const cliente = criarCliente({ rg: '/svc/rg', sn: '/svc/sn', danfse: '/svc/danfse' });
 
@@ -127,7 +128,7 @@ const tamanhoLegivel = (bytes) => (bytes < 1024 * 1024 ? `${Math.max(1, Math.rou
 
 // ============================================================================ navegação
 
-const SECOES = ['simples', 'rg', 'consultas', 'danfse', 'lote'];
+const SECOES = ['simples', 'rg', 'consultas', 'danfse', 'danfe', 'lote'];
 
 function abrirSecao(nome, { foco = false } = {}) {
   if (!SECOES.includes(nome)) nome = 'simples';
@@ -736,7 +737,6 @@ function nomePdf(nomeXml) {
 
 function adicionarArquivosDanfse(files) {
   for (const arquivo of files) {
-    if (!/\.xml$/i.test(arquivo.name) && !/xml/.test(arquivo.type)) continue;
     const grande = arquivo.size > LIMITE_XML;
     arquivosDanfse.push({ id: proximoId++, arquivo, nome: arquivo.name, estado: grande ? 'erro' : 'pendente', erro: grande ? 'O arquivo passa de 5 MB, o limite do gerador.' : null });
   }
@@ -784,21 +784,26 @@ function renderizarDanfse() {
   }
 }
 
-const zonaSoltar = $('#danfse-soltar');
-$('#danfse-arquivos').addEventListener('change', (ev) => {
-  adicionarArquivosDanfse(ev.target.files);
-  ev.target.value = '';
-});
-zonaSoltar.addEventListener('dragover', (ev) => {
-  ev.preventDefault();
-  zonaSoltar.setAttribute('data-arrastando', '');
-});
-zonaSoltar.addEventListener('dragleave', () => zonaSoltar.removeAttribute('data-arrastando'));
-zonaSoltar.addEventListener('drop', (ev) => {
-  ev.preventDefault();
-  zonaSoltar.removeAttribute('data-arrastando');
-  adicionarArquivosDanfse(ev.dataTransfer.files);
-});
+/** Área "arraste ou clique" de XMLs: entrega só os .xml, já fora do input (que é zerado para aceitar o mesmo arquivo de novo). */
+function receberXmls(zona, receber) {
+  const entregar = (lista) => receber([...lista].filter((a) => /\.xml$/i.test(a.name) || /xml/.test(a.type)));
+  const input = $('input[type=file]', zona);
+  input.addEventListener('change', () => {
+    entregar(input.files);
+    input.value = '';
+  });
+  zona.addEventListener('dragover', (ev) => {
+    ev.preventDefault();
+    zona.setAttribute('data-arrastando', '');
+  });
+  zona.addEventListener('dragleave', () => zona.removeAttribute('data-arrastando'));
+  zona.addEventListener('drop', (ev) => {
+    ev.preventDefault();
+    zona.removeAttribute('data-arrastando');
+    entregar(ev.dataTransfer.files);
+  });
+}
+receberXmls($('#danfse-soltar'), adicionarArquivosDanfse);
 
 function invalidarPdfsGerados() {
   for (const a of arquivosDanfse) {
@@ -852,6 +857,196 @@ $('#btn-danfse-limpar').addEventListener('click', () => {
   arquivosDanfse.forEach(liberarPdf);
   arquivosDanfse = [];
   renderizarDanfse();
+});
+
+// ============================================================================ DANFE
+
+const listaDanfe = $('#danfe-lista');
+const folhasDanfe = $('#danfe-folhas');
+let arquivosDanfe = [];
+
+/** "1234.5000" -> "1.234,50": milhar com ponto, tira zeros à direita além de `casas`. */
+function numDanfe(s, casas = 2) {
+  if (!s) return '';
+  const [inteiro, dec = ''] = s.split('.');
+  const resto = dec.replace(/0+$/, '').padEnd(casas, '0');
+  return Number(inteiro).toLocaleString('pt-BR') + (resto ? `,${resto}` : '');
+}
+const dataDanfe = (s) => (s ? s.slice(0, 10).split('-').reverse().join('/') : '');
+const cepDanfe = (s) => s.replace(/^(\d{5})(\d{3})$/, '$1-$2');
+function documentoDanfe(no) {
+  const s = v(no, 'CNPJ') || v(no, 'CPF');
+  return s.length === 14 ? s.replace(/^(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})$/, '$1.$2.$3/$4-$5') : s.replace(/^(\d{3})(\d{3})(\d{3})(\d{2})$/, '$1.$2.$3-$4');
+}
+const enderecoDanfe = (end) => [v(end, 'xLgr'), v(end, 'nro'), v(end, 'xCpl')].filter(Boolean).join(', ');
+const FRETE = { 0: 'Por conta do remetente', 1: 'Por conta do destinatário', 2: 'Por conta de terceiros', 3: 'Próprio, do remetente', 4: 'Próprio, do destinatário', 9: 'Sem frete' };
+const COLUNAS_DANFE = ['Código', 'Descrição', 'NCM/SH', 'O/CST', 'CFOP', 'Un.', 'Qtd.', 'V. unitário', 'V. total', 'BC ICMS', 'V. ICMS', 'V. IPI', 'Alíq. ICMS', 'Alíq. IPI'];
+
+function barrasDanfe(chave) {
+  const ns = 'http://www.w3.org/2000/svg';
+  const svg = document.createElementNS(ns, 'svg');
+  let x = 10; // zona de silêncio dos dois lados, exigida pelos leitores
+  [...code128C(chave)].forEach((largura, i) => {
+    if (i % 2 === 0) {
+      const barra = document.createElementNS(ns, 'rect');
+      for (const [k, valor] of Object.entries({ x, width: largura, height: 40 })) barra.setAttribute(k, valor);
+      svg.append(barra);
+    }
+    x += Number(largura);
+  });
+  for (const [k, valor] of Object.entries({ viewBox: `0 0 ${x + 10} 40`, preserveAspectRatio: 'none', class: 'danfe-barras', role: 'img', 'aria-label': 'Código de barras da chave de acesso' })) svg.setAttribute(k, valor);
+  return svg;
+}
+
+function itemDanfe(item) {
+  const p = filho(item, 'prod');
+  const imposto = filho(item, 'imposto');
+  const icms = filho(imposto, 'ICMS')?.filhos[0]; // ICMS00, ICMS20, ICMSSN102...: um só por item
+  const ipi = busca(imposto, 'IPITrib');
+  const numeros = [v(p, 'NCM'), v(icms, 'orig') + (v(icms, 'CST') || v(icms, 'CSOSN')), v(p, 'CFOP'), v(p, 'uCom'), numDanfe(v(p, 'qCom'), 4), numDanfe(v(p, 'vUnCom')),
+    numDanfe(v(p, 'vProd')), numDanfe(v(icms, 'vBC')), numDanfe(v(icms, 'vICMS')), numDanfe(v(ipi, 'vIPI')), numDanfe(v(icms, 'pICMS')), numDanfe(v(ipi, 'pIPI'))];
+  return h('tr', {},
+    h('td', { text: v(p, 'cProd') }),
+    h('td', {}, v(p, 'xProd'), v(item, 'infAdProd') ? h('small', { text: v(item, 'infAdProd') }) : null),
+    numeros.map((t) => h('td', { text: t })),
+  );
+}
+
+/** Folha A4 no leiaute do DANFE retrato do Manual de Orientação do Contribuinte (NF-e 4.00). */
+function folhaDanfe({ chave, ide, emit, dest, det, total, transp, cobr, infAdic, prot, homologacao }) {
+  const c = (rotulo, valor, classe = '') => h('div', { class: `dc ${classe}` }, h('span', { text: rotulo }), h('b', { text: valor || ' ' }));
+  const linha = (...celulas) => h('div', { class: 'dl' }, ...celulas);
+  const titulo = (texto) => h('h3', { text: texto });
+  const t = filho(total, 'ICMSTot');
+  const ibscbs = filho(total, 'IBSCBSTot');
+  const end = filho(emit, 'enderEmit');
+  const endDest = filho(dest, 'enderDest');
+  const transporta = filho(transp, 'transporta');
+  const veiculo = filho(transp, 'veicTransp');
+  const duplicatas = filhos(cobr, 'dup');
+  const numero = v(ide, 'nNF').padStart(9, '0').replace(/(\d{3})(?=\d)/g, '$1.');
+  const saida = v(ide, 'dhSaiEnt');
+  const recebido = v(prot, 'dhRecbto');
+  const marca = homologacao ? 'Sem valor fiscal: emitida em homologação' : prot ? null : 'Sem valor fiscal: falta a autorização de uso';
+  return h('article', { class: 'danfe', 'data-chave': chave },
+    marca ? h('p', { class: 'danfe-marca', text: marca }) : null,
+    linha(
+      c(`Recebemos de ${v(emit, 'xNome')} os produtos e/ou serviços da nota fiscal eletrônica indicada ao lado`,
+        `Emissão: ${dataDanfe(v(ide, 'dhEmi'))} · Destinatário: ${v(dest, 'xNome')} · Valor total: R$ ${numDanfe(v(t, 'vNF'))}`, 'f6'),
+      c('NF-e', `Nº ${numero} · Série ${v(ide, 'serie')}`, 'f2'),
+    ),
+    linha(c('Data de recebimento', ''), c('Identificação e assinatura do recebedor', '', 'f4')),
+    h('hr', { class: 'danfe-corte' }),
+    // O cabeçalho fica no thead: o navegador repete em cada folha, como o MOC pede para notas com mais de uma folha.
+    h('table', { class: 'danfe-pagina' }, h('thead', {}, h('tr', {}, h('td', {},
+    h('div', { class: 'dl' },
+      h('div', { class: 'dc f3 danfe-emitente' },
+        h('strong', { text: v(emit, 'xNome') }),
+        h('span', { text: enderecoDanfe(end) }),
+        h('span', { text: [v(end, 'xBairro'), cepDanfe(v(end, 'CEP'))].filter(Boolean).join(' · ') }),
+        h('span', { text: `${v(end, 'xMun')} - ${v(end, 'UF')}${v(end, 'fone') ? ` · Fone ${v(end, 'fone')}` : ''}` }),
+      ),
+      h('div', { class: 'dc f2 danfe-titulo' },
+        h('strong', { text: 'DANFE' }),
+        h('span', { text: 'Documento auxiliar da nota fiscal eletrônica' }),
+        h('span', { text: `${v(ide, 'tpNF')} - ${v(ide, 'tpNF') === '0' ? 'Entrada' : 'Saída'}` }),
+        h('b', { text: `Nº ${numero}` }),
+        h('span', { text: `Série ${v(ide, 'serie')}` }),
+      ),
+      h('div', { class: 'dc f4 danfe-chave' },
+        barrasDanfe(chave),
+        h('span', { text: 'Chave de acesso' }),
+        h('b', { text: chave.match(/\d{4}/g).join(' ') }),
+        h('small', { text: 'Consulta de autenticidade no portal nacional da NF-e (www.nfe.fazenda.gov.br/portal) ou no site da Sefaz autorizadora' }),
+      ),
+    ),
+    linha(c('Natureza da operação', v(ide, 'natOp'), 'f3'), c('Protocolo de autorização de uso', prot ? `${v(prot, 'nProt')} · ${dataDanfe(recebido)} ${recebido.slice(11, 19)}` : '', 'f2')),
+    linha(c('Inscrição estadual', v(emit, 'IE')), c('Inscrição estadual do subst. tributário', v(emit, 'IEST')), c('CNPJ / CPF', documentoDanfe(emit))),
+    ))), h('tbody', {}, h('tr', {}, h('td', {},
+    titulo('Destinatário / remetente'),
+    linha(c('Nome / razão social', v(dest, 'xNome'), 'f4'), c('CNPJ / CPF', documentoDanfe(dest), 'f2'), c('Data da emissão', dataDanfe(v(ide, 'dhEmi')))),
+    linha(c('Endereço', enderecoDanfe(endDest), 'f3'), c('Bairro / distrito', v(endDest, 'xBairro'), 'f2'), c('CEP', cepDanfe(v(endDest, 'CEP'))), c('Data da saída/entrada', dataDanfe(saida))),
+    linha(c('Município', v(endDest, 'xMun'), 'f2'), c('Fone / fax', v(endDest, 'fone')), c('UF', v(endDest, 'UF')), c('Inscrição estadual', v(dest, 'IE')), c('Hora da saída/entrada', saida.slice(11, 19))),
+    duplicatas.length
+      ? [titulo('Fatura / duplicatas'), h('div', { class: 'dl danfe-duplicatas' }, duplicatas.map((d) => c(`Duplicata ${v(d, 'nDup')}`, `${dataDanfe(v(d, 'dVenc'))} · R$ ${numDanfe(v(d, 'vDup'))}`)))]
+      : null,
+    titulo('Cálculo do imposto'),
+    linha(c('Base de cálculo do ICMS', numDanfe(v(t, 'vBC'))), c('Valor do ICMS', numDanfe(v(t, 'vICMS'))), c('Base de cálculo do ICMS ST', numDanfe(v(t, 'vBCST'))),
+      c('Valor do ICMS ST', numDanfe(v(t, 'vST'))), c('Valor aproximado dos tributos', numDanfe(v(t, 'vTotTrib'))), c('Valor total dos produtos', numDanfe(v(t, 'vProd')))),
+    linha(c('Valor do frete', numDanfe(v(t, 'vFrete'))), c('Valor do seguro', numDanfe(v(t, 'vSeg'))), c('Desconto', numDanfe(v(t, 'vDesc'))),
+      c('Outras despesas', numDanfe(v(t, 'vOutro'))), c('Valor do IPI', numDanfe(v(t, 'vIPI'))), c('Valor total da nota', numDanfe(v(t, 'vNF')), 'danfe-total')),
+    ibscbs
+      ? linha(c('Base de cálculo do IBS e da CBS', numDanfe(v(ibscbs, 'vBCIBSCBS'))), c('Valor do IBS', numDanfe(v(ibscbs, 'gIBS', 'vIBS'))), c('Valor da CBS', numDanfe(v(ibscbs, 'gCBS', 'vCBS'))),
+        v(total, 'vNFTot') ? c('Total com IBS, CBS e IS', numDanfe(v(total, 'vNFTot'))) : null)
+      : null,
+    titulo('Transportador / volumes transportados'),
+    linha(c('Nome / razão social', v(transporta, 'xNome'), 'f3'), c('Frete', `${v(transp, 'modFrete')} - ${FRETE[v(transp, 'modFrete')] ?? ''}`, 'f2'),
+      c('Placa do veículo', v(veiculo, 'placa')), c('UF', v(veiculo, 'UF')), c('CNPJ / CPF', documentoDanfe(transporta), 'f2')),
+    linha(c('Endereço', v(transporta, 'xEnder'), 'f3'), c('Município', v(transporta, 'xMun'), 'f2'), c('UF', v(transporta, 'UF')), c('Inscrição estadual', v(transporta, 'IE'), 'f2')),
+    filhos(transp, 'vol').map((vol) => linha(c('Quantidade', v(vol, 'qVol')), c('Espécie', v(vol, 'esp')), c('Marca', v(vol, 'marca')), c('Numeração', v(vol, 'nVol')),
+      c('Peso bruto', numDanfe(v(vol, 'pesoB'), 3)), c('Peso líquido', numDanfe(v(vol, 'pesoL'), 3)))),
+    titulo('Dados dos produtos / serviços'),
+    h('table', { class: 'danfe-itens' }, h('thead', {}, h('tr', {}, COLUNAS_DANFE.map((col) => h('th', { text: col })))), h('tbody', {}, det.map(itemDanfe))),
+    titulo('Dados adicionais'),
+    h('div', { class: 'dl danfe-adicionais' }, c('Informações complementares', [v(infAdic, 'infCpl'), v(infAdic, 'infAdFisco')].filter(Boolean).join(' '), 'f3'), c('Reservado ao fisco', '')),
+    h('p', { class: 'danfe-rodape', text: 'DANFE montado pela Central RTC a partir do XML. A validade fiscal é a do XML autorizado pela Sefaz.' }),
+    )))),
+  );
+}
+
+async function adicionarArquivosDanfe(files) {
+  for (const arquivo of files) {
+    const a = { arquivo, nome: arquivo.name };
+    try {
+      if (arquivo.size > LIMITE_XML) throw new Error('O arquivo passa de 5 MB: não parece um XML de NF-e.');
+      a.folha = folhaDanfe(lerNFe(await arquivo.text()));
+    } catch (e) {
+      a.erro = e.message;
+    }
+    arquivosDanfe.push(a);
+  }
+  renderizarDanfe();
+}
+
+function renderizarDanfe() {
+  listaDanfe.replaceChildren(
+    ...arquivosDanfe.map((a) =>
+      h('li', {},
+        h('span', { class: 'nome' }, a.nome, h('span', { class: 'tamanho', text: tamanhoLegivel(a.arquivo.size) })),
+        a.folha ? carimbo('Pronto', 'ok') : carimbo('Erro', 'erro'),
+        h('span', { class: 'links' },
+          a.folha ? h('button', { type: 'button', onclick: () => a.folha.scrollIntoView({ behavior: 'smooth' }) }, 'Ver') : null,
+          h('button', { type: 'button', onclick: () => { arquivosDanfe = arquivosDanfe.filter((x) => x !== a); renderizarDanfe(); } }, 'Tirar'),
+        ),
+        a.erro ? h('span', { class: 'detalhe', text: a.erro }) : null,
+      ),
+    ),
+  );
+  folhasDanfe.replaceChildren(...arquivosDanfe.flatMap((a) => a.folha ?? []));
+  $('#btn-danfe-imprimir').disabled = !arquivosDanfe.some((a) => a.folha);
+  $('#btn-danfe-limpar').disabled = !arquivosDanfe.length;
+}
+
+receberXmls($('#danfe-soltar'), adicionarArquivosDanfe);
+
+let tituloAntes = null;
+$('#btn-danfe-imprimir').addEventListener('click', () => {
+  const folhas = arquivosDanfe.filter((a) => a.folha);
+  tituloAntes = document.title;
+  // O navegador sugere o título da página como nome do PDF.
+  document.title = folhas.length === 1 ? `DANFE ${folhas[0].folha.dataset.chave}` : `DANFE ${hojeISO()}`;
+  document.body.classList.add('imprimindo-danfe');
+  print();
+});
+addEventListener('afterprint', () => {
+  document.body.classList.remove('imprimindo-danfe');
+  if (tituloAntes) document.title = tituloAntes;
+  tituloAntes = null;
+});
+
+$('#btn-danfe-limpar').addEventListener('click', () => {
+  arquivosDanfe = [];
+  renderizarDanfe();
 });
 
 // ============================================================================ Em lote

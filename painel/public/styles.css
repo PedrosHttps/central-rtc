@@ -411,6 +411,59 @@ dl.chaves dd { overflow-wrap: anywhere; }
 
 .previa-pdf { width: 100%; height: 70vh; border: 1.5px solid var(--tinta); border-radius: 3px; background: var(--folha); }
 
+/* ------------------------------------------------------------------ DANFE
+   Folha A4 em preto e branco, no leiaute do Manual de Orientação do Contribuinte. Impressa sozinha (classe no body). */
+
+.danfe-folhas { overflow-x: auto; }
+.danfe { position: relative; width: 194mm; margin: 0 0 1.5rem; padding: 5mm; background: #fff; color: #000; font: 7.5pt/1.25 Arial, Helvetica, sans-serif; border: 1px solid var(--linha); }
+.danfe h3 { margin: 1.6mm 0 0.4mm; font: 700 6.5pt Arial, Helvetica, sans-serif; text-transform: uppercase; }
+.danfe .dl { display: flex; }
+.danfe .dc { flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; padding: 0.3mm 1mm 0.5mm; border: 0.75pt solid #000; }
+.danfe .dc + .dc { border-left: 0; }
+.danfe .dl + .dl > .dc { border-top: 0; }
+.danfe .dc > span:first-child { font-size: 5.5pt; text-transform: uppercase; }
+.danfe .dc > b { font-weight: 700; font-size: 8pt; overflow-wrap: anywhere; }
+.danfe .f2 { flex-grow: 2; }
+.danfe .f3 { flex-grow: 3; }
+.danfe .f4 { flex-grow: 4; }
+.danfe .f6 { flex-grow: 6; }
+.danfe-pagina { width: 100%; border-collapse: collapse; }
+.danfe-pagina > * > tr > td { padding: 0; }
+.danfe-pagina > tbody > tr { break-inside: auto; }
+.danfe-corte { border: 0; border-top: 0.75pt dashed #000; margin: 2.5mm 0; }
+.danfe .danfe-emitente { justify-content: center; gap: 0.5mm; font-size: 7.5pt; }
+.danfe-emitente strong { font-size: 10pt; }
+.danfe .danfe-titulo, .danfe .danfe-chave { align-items: center; justify-content: center; text-align: center; gap: 0.4mm; }
+.danfe-titulo strong { font-size: 15pt; letter-spacing: 1pt; }
+.danfe-titulo b { font-size: 9pt; }
+.danfe-barras { width: 100%; height: 13mm; }
+.danfe .danfe-chave > b { font-size: 8pt; white-space: nowrap; }
+.danfe-chave small { font-size: 6pt; }
+.danfe .danfe-chave > span:first-of-type { font-size: 5.5pt; text-transform: uppercase; }
+.danfe .danfe-total > b { font-size: 9.5pt; }
+.danfe .danfe-duplicatas { flex-wrap: wrap; }
+.danfe .danfe-duplicatas > .dc { flex: 0 0 25%; border-left: 0.75pt solid #000; margin-left: -0.75pt; }
+.danfe-itens { width: 100%; border-collapse: collapse; font-size: 6.5pt; }
+.danfe-itens th, .danfe-itens td { border: 0.75pt solid #000; padding: 0.4mm 0.8mm; text-align: left; vertical-align: top; }
+.danfe-itens th { font-size: 5.5pt; font-weight: 400; text-transform: uppercase; }
+.danfe-itens td:nth-child(n+7) { text-align: right; white-space: nowrap; }
+.danfe-itens td:nth-child(2) { width: 34%; }
+.danfe-itens small { display: block; font-size: 6pt; }
+.danfe-itens tr { break-inside: avoid; }
+.danfe .danfe-adicionais > .dc { min-height: 24mm; }
+.danfe-marca { position: absolute; inset: 115mm 0 auto; margin: 0; text-align: center; transform: rotate(-18deg); font: 700 20pt Arial, Helvetica, sans-serif; text-transform: uppercase; color: rgba(0, 0, 0, 0.14); pointer-events: none; }
+.danfe-rodape { margin: 1mm 0 0; font-size: 5.5pt; text-align: right; }
+
+@page danfe { size: A4; margin: 8mm; }
+@media print {
+  body.imprimindo-danfe { background: #fff; }
+  .imprimindo-danfe > :not(.estrutura), .imprimindo-danfe .menu, .imprimindo-danfe #secao-danfe > :not(#danfe-folhas) { display: none !important; }
+  .imprimindo-danfe .estrutura { display: block; max-width: none; margin: 0; padding: 0; }
+  .imprimindo-danfe .danfe-folhas { overflow: visible; }
+  .imprimindo-danfe .danfe { page: danfe; margin: 0; padding: 0; border: 0; break-after: page; print-color-adjust: exact; }
+  .imprimindo-danfe .danfe:last-child { break-after: auto; }
+}
+
 /* ------------------------------------------------------------------ lote */
 
 .progresso { position: relative; height: 1.75rem; background: var(--folha); border: 1.5px solid var(--tinta); border-radius: 3px; overflow: hidden; margin: 1rem 0; }
