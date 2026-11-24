@@ -927,7 +927,8 @@ function folhaDanfe({ chave, ide, emit, dest, det, total, transp, cobr, infAdic,
   const numero = v(ide, 'nNF').padStart(9, '0').replace(/(\d{3})(?=\d)/g, '$1.');
   const saida = v(ide, 'dhSaiEnt');
   const recebido = v(prot, 'dhRecbto');
-  const marca = homologacao ? 'Sem valor fiscal: emitida em homologação' : prot ? null : 'Sem valor fiscal: falta a autorização de uso';
+  // Em contingência (tpEmis diferente de 1) o DANFE vale antes de o protocolo chegar.
+  const marca = homologacao ? 'Sem valor fiscal: emitida em homologação' : prot || v(ide, 'tpEmis') !== '1' ? null : 'Sem valor fiscal: falta a autorização de uso';
   return h('article', { class: 'danfe', 'data-chave': chave },
     marca ? h('p', { class: 'danfe-marca', text: marca }) : null,
     linha(
@@ -1030,13 +1031,15 @@ function renderizarDanfe() {
 receberXmls($('#danfe-soltar'), adicionarArquivosDanfe);
 
 let tituloAntes = null;
-$('#btn-danfe-imprimir').addEventListener('click', () => {
+$('#btn-danfe-imprimir').addEventListener('click', () => print());
+// No beforeprint, e não no botão: vale também para Ctrl+P e para o menu do navegador.
+addEventListener('beforeprint', () => {
   const folhas = arquivosDanfe.filter((a) => a.folha);
+  if ($('#secao-danfe').hidden || !folhas.length) return;
   tituloAntes = document.title;
   // O navegador sugere o título da página como nome do PDF.
   document.title = folhas.length === 1 ? `DANFE ${folhas[0].folha.dataset.chave}` : `DANFE ${hojeISO()}`;
   document.body.classList.add('imprimindo-danfe');
-  print();
 });
 addEventListener('afterprint', () => {
   document.body.classList.remove('imprimindo-danfe');
