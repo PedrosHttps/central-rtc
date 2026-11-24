@@ -4,9 +4,9 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Central RTC — a reforma tributária calculada com os serviços oficiais da Receita</title>
-  <meta name="description" content="Disponível online e grátis. Painel de código aberto que junta as calculadoras de CBS, IBS e Imposto Seletivo da Receita Federal (regime geral e Simples Nacional) e o gerador de DANFSe, com processamento em lote.">
+  <meta name="description" content="Disponível online e grátis. Painel de código aberto que junta as calculadoras de CBS, IBS e Imposto Seletivo da Receita Federal (regime geral e Simples Nacional), o gerador de DANFSe e um gerador de DANFE sem certificado digital, com processamento em lote.">
   <meta property="og:title" content="Central RTC">
-  <meta property="og:description" content="As calculadoras da reforma tributária e o gerador de DANFSe da Receita Federal num painel só, online, com processamento em lote.">
+  <meta property="og:description" content="As calculadoras da reforma tributária e o gerador de DANFSe da Receita Federal num painel só, online, com processamento em lote e DANFE de NF-e.">
   <meta property="og:image" content="img/simples-resultado.png">
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect x='3' y='3' width='26' height='26' rx='3' fill='%23D7EE02' stroke='%231A2A66' stroke-width='3'/%3E%3Cpath d='M9 12h14M9 17h14M9 22h8' stroke='%231A2A66' stroke-width='2.5'/%3E%3C/svg%3E">
   <link rel="stylesheet" href="estilo.css">
@@ -31,7 +31,7 @@
         <div>
           <span class="carimbo">Disponível online · grátis</span>
           <h1>A reforma tributária, calculada pelos serviços oficiais</h1>
-          <p class="lead">A Central RTC junta as calculadoras de CBS, IBS e Imposto Seletivo da Receita Federal e o gerador de DANFSe num painel só. Funciona no navegador, do computador ou do celular, para um item ou para uma planilha inteira.</p>
+          <p class="lead">A Central RTC junta as calculadoras de CBS, IBS e Imposto Seletivo da Receita Federal e o gerador de DANFSe num painel só, e ainda monta o DANFE das notas de produtos. Funciona no navegador, do computador ou do celular, para um item ou para uma planilha inteira.</p>
           <div class="acoes">
             <a class="botao botao-principal" href="https://central-rtc.taild4c7a5.ts.net">Criar conta e usar</a>
             <a class="botao" href="guia.html">Ver o guia de uso</a>
@@ -94,7 +94,7 @@
           </article>
           <article>
             <h3>Empresas e quem emite nota</h3>
-            <p>Veja quanto de CBS e IBS cada produto ou serviço vai ter, e gere o DANFSe das NFS-e já emitidas.</p>
+            <p>Veja quanto de CBS e IBS cada produto ou serviço vai ter, e gere o DANFSe das NFS-e e o DANFE das NF-e já emitidas.</p>
           </article>
           <article>
             <h3>Desenvolvedores e equipes de ERP</h3>
@@ -109,13 +109,13 @@
       <div class="moldura">
         <span class="sobretitulo">Recursos</span>
         <h2>O que você faz com ela</h2>
-        <p class="intro">Cada parte conversa com um serviço oficial. A Central RTC monta os pedidos, chama a calculadora certa e organiza a resposta. Nenhum valor é recalculado por fora.</p>
+        <p class="intro">Os cálculos e o DANFSe vêm dos serviços oficiais: a Central RTC monta os pedidos, chama o serviço certo e organiza a resposta, sem recalcular nenhum valor por fora. O DANFE é montado pela própria Central RTC, a partir do XML da nota.</p>
         <div class="ficha">
           <div class="campo"><span class="rotulo">Simples Nacional</span><strong>IBS e CBS item a item</strong><p>Conforme a NT 2026.005, com o estado de cada item e os códigos de erro explicados.</p></div>
           <div class="campo"><span class="rotulo">Atividades e anexos</span><strong>Qual cAtivSN usar</strong><p>As 15 atividades vigentes, marcadas como disponíveis ou não para os anexos e o documento da empresa.</p></div>
           <div class="campo"><span class="rotulo">Regime geral</span><strong>CBS, IBS e IS com memória</strong><p>Reduções, alíquotas efetivas e Imposto Seletivo. Depois, o XML do grupo de tributação validado no XSD.</p></div>
           <div class="campo"><span class="rotulo">Consultas</span><strong>As tabelas oficiais</strong><p>cClassTrib, NCM, NBS, alíquotas de referência e descrição dos códigos de erro.</p></div>
-          <div class="campo"><span class="rotulo">DANFSe</span><strong>Uma pasta de XMLs vira PDFs</strong><p>Arraste as NFS-e autorizadas, escolha a situação e baixe tudo num .zip.</p></div>
+          <div class="campo"><span class="rotulo">DANFSe e DANFE</span><strong>XML vira nota para imprimir</strong><p>Uma pasta de NFS-e vira PDFs num .zip. As NF-e de produtos viram DANFE, sem certificado digital.</p></div>
           <div class="campo"><span class="rotulo">Em lote</span><strong>Planilha entra, planilha sai</strong><p>Centenas de itens por CSV, com o resultado pronto para o Excel e as respostas completas em JSON.</p></div>
         </div>
       </div>
@@ -151,6 +151,14 @@
           </div>
           <div class="peca">
             <div class="texto">
+              <h3>DANFE sem certificado</h3>
+              <p>Arraste o XML de uma NF-e e o DANFE aparece na hora, no leiaute oficial, com o código de barras da chave e o quadro de IBS e CBS. Depois é só imprimir ou salvar em PDF.</p>
+              <p>O certificado digital só é exigido de quem emite a nota. O DANFE é montado no navegador, e o XML não sai do computador.</p>
+            </div>
+            <figure><img src="img/danfe.png" width="2560" height="1640" loading="lazy" alt="Tela DANFE com uma NF-e pronta, um XML de NFS-e recusado com o motivo e o começo do DANFE gerado, com o código de barras da chave de acesso."></figure>
+          </div>
+          <div class="peca">
+            <div class="texto">
               <h3>Planilha</h3>
               <p>Antes de processar, o painel aponta linhas com colunas faltando ou dados diferentes dentro da mesma nota. No fim, cada item volta com a linha de origem.</p>
             </div>
@@ -179,7 +187,7 @@
       <div class="moldura">
         <span class="sobretitulo">Segurança e privacidade</span>
         <h2>Seus dados fiscais não ficam guardados</h2>
-        <p class="intro">O painel calcula e devolve. Planilhas, XMLs e resultados não são gravados. A única coisa salva é a sua conta.</p>
+        <p class="intro">O painel calcula e devolve. Planilhas, XMLs e resultados não são gravados, e o XML do DANFE nem chega ao servidor. A única coisa salva é a sua conta.</p>
         <ul class="garantias">
           <li><strong>Conexão criptografada</strong><p>Todo o acesso online passa por HTTPS.</p></li>
           <li><strong>Senha embaralhada</strong><p>A senha é guardada só como hash scrypt. Nem o administrador consegue lê-la.</p></li>
@@ -235,7 +243,7 @@ node cli.js danfse ./xmls -o ./pdfs</pre>
       <div class="moldura">
         <span class="sobretitulo">Tecnologia</span>
         <h2>Como as peças se conectam</h2>
-        <p class="intro">O painel e a linha de comando falam com três serviços independentes, cada um compilado a partir do repositório oficial da Receita Federal.</p>
+        <p class="intro">O painel e a linha de comando falam com três serviços independentes, cada um compilado a partir do repositório oficial da Receita Federal. O DANFE não depende de nenhum deles: é montado no próprio navegador.</p>
         <div class="mapa">
           <div class="caixa"><span class="rotulo">porta 3000</span><strong>Painel e CLI</strong><br><span class="nota">Node.js, sem dependências externas</span></div>
           <div class="seta" aria-hidden="true">⟶</div>
@@ -254,7 +262,7 @@ node cli.js danfse ./xmls -o ./pdfs</pre>
         <div class="avisos">
           <div class="aviso"><h3>Não é um produto da Receita</h3><p>É um projeto independente que usa os serviços de código aberto publicados por ela.</p></div>
           <div class="aviso"><h3>Valores estimados</h3><p>As regras da reforma ainda mudam. Confirme com seu contador antes de usar os resultados em notas, preços ou declarações.</p></div>
-          <div class="aviso"><h3>DANFSe só de nota autorizada</h3><p>O DANFSe é o documento auxiliar de uma NFS-e já emitida. Use os XMLs que o emissor devolveu.</p></div>
+          <div class="aviso"><h3>DANFSe e DANFE só de nota autorizada</h3><p>Os dois são documentos auxiliares de notas já emitidas. Use os XMLs que o emissor devolveu. No DANFE, nota sem autorização sai marcada como sem valor fiscal.</p></div>
         </div>
       </div>
     </section>
