@@ -56,6 +56,9 @@ Tudo isso também roda pela linha de comando, para agendar ou encaixar em outros
   </tr>
   <tr>
     <td width="50%"><img src="docs/img/danfse.png" alt="Geração de DANFSe em lote"><br><sub><b>DANFSe:</b> vários XMLs de uma vez, com o motivo de cada erro</sub></td>
+    <td width="50%"><img src="docs/img/danfe.png" alt="Geração de DANFE de NF-e com código de barras da chave de acesso"><br><sub><b>DANFE:</b> NF-e em DANFE no navegador, sem certificado</sub></td>
+  </tr>
+  <tr>
     <td width="50%"><img src="docs/img/lote.png" alt="Processamento de planilha em lote"><br><sub><b>Em lote:</b> planilha entra, planilha sai</sub></td>
   </tr>
 </table>
