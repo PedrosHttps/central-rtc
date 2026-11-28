@@ -565,6 +565,9 @@ const SEGURANCA = {
   'X-Content-Type-Options': 'nosniff',
   'Referrer-Policy': 'no-referrer',
   'Strict-Transport-Security': 'max-age=31536000',
+  'Cross-Origin-Opener-Policy': 'same-origin',
+  'Cross-Origin-Resource-Policy': 'same-origin',
+  'Permissions-Policy': 'camera=(), microphone=(), geolocation=(), payment=(), usb=()',
 };
 
 const SERVICOS = {
@@ -724,6 +727,10 @@ async function servirArquivo(req, res, caminhoUrl) {
 const servidor = http.createServer(async (req, res) => {
   try {
     for (const [nome, valor] of Object.entries(SEGURANCA)) res.setHeader(nome, valor);
+    // O navegador avisa quando o envio vem de outro site: barra cadastro em massa e login forjado a partir de páginas alheias.
+    if (req.method !== 'GET' && /^(cross|same)-site$/.test(req.headers['sec-fetch-site'] || '')) {
+      return responderJson(res, 403, { mensagem: 'Envio vindo de outro site.' });
+    }
     const url = new URL(req.url, 'http://local');
     if ((await controlarAcesso(req, res, url.pathname)) !== true) return;
 
