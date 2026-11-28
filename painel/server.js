@@ -228,8 +228,10 @@ async function trocarSenha(req, res, sessao, ip) {
   if (sessao.admin) throw erro(400, 'A senha do administrador fica no arquivo .env do servidor.');
   if (bloqueado(ip)) throw erro(429, 'Muitas senhas erradas. Espere 15 minutos e tente de novo.');
   const { atual, nova } = await lerJson(req);
+  const tentativa = `${sessao.nome}:${atual}:${usuarios[sessao.nome].hash}`;
+  if (repetida(ip, tentativa)) throw erro(403, 'A senha atual está errada.');
   if (!(await senhaConfere(String(atual || ''), usuarios[sessao.nome]))) {
-    registrarFalha(ip, `${sessao.nome}:${atual}`);
+    registrarFalha(ip, tentativa);
     throw erro(403, 'A senha atual está errada.');
   }
   validarSenha(nova);

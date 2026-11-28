@@ -267,7 +267,8 @@ test('Painel: login, cadastro de usuários e troca da senha provisória', async 
 });
 
 test('Painel: bloqueia o endereço que erra a senha demais', async (t) => {
-  const { entrar } = await subirPainel(t, 39518);
+  const { entrar, pedir } = await subirPainel(t, 39518);
+  const pedirComo = (sessao, caminho, corpo) => pedir(caminho, { metodo: 'POST', corpo, sessao });
 
   // 10 senhas erradas diferentes bloqueiam o endereço (até com a senha certa); outro endereço segue entrando.
   for (let i = 0; i < 10; i++) assert.equal((await entrar('ana', `errada-${i}`, '10.0.0.2')).status, 401);
@@ -277,6 +278,20 @@ test('Painel: bloqueia o endereço que erra a senha demais', async (t) => {
   // A mesma tentativa repetida não bloqueia.
   for (let i = 0; i < 15; i++) assert.equal((await entrar('ana', 'senha-antiga', '10.0.0.4')).status, 401);
   assert.equal((await entrar('ana', 'senha-de-teste-123', '10.0.0.4')).status, 200);
+
+  // A repetida nem passa pelo scrypt: 200 de uma vez terminam rápido (com scrypt em cada uma, levavam uns 3 s).
+  await entrar('ana', 'mesma-errada', '10.0.0.5');
+  const inicio = performance.now();
+  const enxurrada = await Promise.all(Array.from({ length: 200 }, () => entrar('ana', 'mesma-errada', '10.0.0.5')));
+  assert.ok(enxurrada.every((r) => r.status === 401));
+  assert.ok(performance.now() - inicio < 1500, `levou ${Math.round(performance.now() - inicio)} ms`);
+
+  // Depois que a senha muda, a tentativa que falhou antes é conferida de novo.
+  const admin = await entrar('ana', 'senha-de-teste-123', '10.0.0.6');
+  await pedirComo(admin.sessao, '/api/usuarios', { usuario: 'bia', senha: 'provisoria-123' });
+  assert.equal((await entrar('bia', 'nova-senha-456', '10.0.0.7')).status, 401);
+  await pedirComo(admin.sessao, '/api/usuarios/bia/senha', { senha: 'nova-senha-456' });
+  assert.equal((await entrar('bia', 'nova-senha-456', '10.0.0.7')).status, 200);
 
   // IPv6 conta pelo bloco /64: trocar de endereço dentro do bloco não escapa; outro bloco segue entrando.
   for (let i = 1; i <= 10; i++) assert.equal((await entrar('ana', `errada-${i}`, `2001:db8:1:2::${i}`)).status, 401);
