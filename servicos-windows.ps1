@@ -83,6 +83,8 @@ if (Test-Path $envArquivo) {
     }
   }
 }
+# Sem janela é o painel publicado na internet (o vigia religa assim): sem senha ele abriria sem login para qualquer um.
+if ($Oculto -and -not $env:PAINEL_SENHA) { throw 'Sem PAINEL_SENHA no .env: o painel subiria sem login.' }
 Subir 'painel' 3000 'node' (Join-Path $PSScriptRoot 'painel') 'server.js'
 foreach ($nome in $definidas) { Remove-Item "Env:$nome" }
 

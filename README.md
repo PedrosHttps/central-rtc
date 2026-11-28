@@ -170,11 +170,10 @@ Se mudar o que é guardado ou por quanto tempo, atualize o aviso.
 
 ### Cópia das contas
 
-Uma vez por dia o `vigia-pedidos.ps1` copia o `painel/dados/usuarios.json` para `copias-contas/usuarios-AAAA-MM-DD.json`, fora do Git, e guarda as 30 últimas. A cópia tem os e-mails e o hash das senhas. Para voltar uma cópia, pare o painel antes (ele guarda as contas na memória e regravaria o arquivo), troque o arquivo e suba de novo:
+Uma vez por dia o `vigia-pedidos.ps1` copia o `painel/dados/usuarios.json` para `copias-contas/usuarios-AAAA-MM-DD.json`, fora do Git, e guarda as 30 últimas. A cópia tem os e-mails e o hash das senhas. Para voltar uma cópia, pare o painel e troque o arquivo na mesma linha (ele guarda as contas na memória e regravaria o arquivo; separado, o vigia pode religá-lo no meio), depois suba de novo:
 
 ```powershell
-Get-NetTCPConnection -LocalPort 3000 -State Listen | ForEach-Object { Stop-Process -Id $_.OwningProcess }
-Copy-Item copias-contas\usuarios-AAAA-MM-DD.json painel\dados\usuarios.json
+Get-NetTCPConnection -LocalPort 3000 -State Listen | ForEach-Object { Stop-Process -Id $_.OwningProcess }; Copy-Item copias-contas\usuarios-AAAA-MM-DD.json painel\dados\usuarios.json
 powershell -ExecutionPolicy Bypass -File servicos-windows.ps1 -Oculto
 ```
 
