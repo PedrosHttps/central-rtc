@@ -27,9 +27,10 @@ services:
     restart: unless-stopped
 
   danfse:
-    # Usa o Dockerfile do próprio repositório da Receita.
+    # Usa o Dockerfile do próprio repositório da Receita, preso a um commit (versão 1.0.0, de 22/10/2026):
+    # uma mudança no repositório só entra aqui quando alguém conferir e trocar o commit.
     build:
-      context: https://github.com/ReceitaFederal/calculadora-rtc-gerador-danfse.git#main
+      context: https://github.com/ReceitaFederal/calculadora-rtc-gerador-danfse.git#8d79e6b2f7fad6375340afcb51c85ed370c64a14
     environment:
       SERVER_PORT: "8080"
     ports:
