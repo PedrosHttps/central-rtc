@@ -159,6 +159,12 @@ function bloqueado(ip) {
   return Boolean(f) && f.n >= MAX_FALHAS && Date.now() - f.desde < JANELA_MS;
 }
 
+// A mesma tentativa errada de novo já tem resposta conhecida: nem passa pelo scrypt, senão repeti-la sem parar trava o login de todos.
+function repetida(ip, tentativa) {
+  const f = falhas.get(ip);
+  return Boolean(f) && Date.now() - f.desde < JANELA_MS && f.ultima === resumo(tentativa).toString('hex');
+}
+
 function registrarFalha(ip, tentativa) {
   const marca = resumo(tentativa).toString('hex');
   const f = falhas.get(ip);
@@ -196,10 +202,13 @@ async function entrar(req, res, ip) {
   const { usuario, senha } = await lerJson(req);
   const nome = String(usuario || '').trim().toLowerCase();
   const registro = registroDe(nome);
+  // O hash atual entra na marca: depois de uma troca de senha, a mesma tentativa volta a ser conferida.
+  const tentativa = `${nome}:${senha}:${registro?.hash}`;
+  if (repetida(ip, tentativa)) throw erro(401, 'Usuário ou senha incorretos.');
   // Sem conta: confere contra um hash falso, para o tempo de resposta não revelar quem existe.
   const confere = await senhaConfere(String(senha || ''), registro?.hash ? registro : REGISTRO_FALSO);
   if (!registro?.hash || !confere) {
-    registrarFalha(ip, `${nome}:${senha}`);
+    registrarFalha(ip, tentativa);
     throw erro(401, 'Usuário ou senha incorretos.');
   }
   falhas.delete(ip);
