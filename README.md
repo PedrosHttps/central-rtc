@@ -91,7 +91,7 @@ As portas ficam presas ao `127.0.0.1`, então só o seu computador acessa.
 ## Como rodar (sem Docker)
 
 1. Suba os três serviços. Você vai precisar de Java 25 (regime geral e Simples), Go 1.27 (DANFSe) e Git; o Maven não, os repositórios trazem o `mvnw`.
-   - **No Windows**, o script faz tudo: clona em `Documents\rfb-servicos`, gera o banco, compila (só na primeira vez) e abre cada serviço e o painel numa janela. O painel lê o login e o e-mail do `.env`. Ele só sobe o que não estiver no ar e limita cada Java a 384 MB de memória. Com `-Oculto` tudo roda sem janela, com a saída em `Documents\rfb-servicos\logs`. É assim que o `vigia-pedidos.ps1` religa, a cada 5 minutos, o que tiver caído (ou tudo, logo depois de ligar o computador).
+   - **No Windows**, o script faz tudo: clona em `Documents\rfb-servicos`, gera o banco, compila (só na primeira vez) e abre cada serviço e o painel numa janela. O painel lê o login e o e-mail do `.env`. Ele só sobe o que não estiver no ar limita cada Java a 256 MB de memória e deixa as calculadoras aceitando conexão só do próprio computador. Com `-Oculto` tudo roda sem janela, com a saída em `Documents\rfb-servicos\logs`. É assim que o `vigia-pedidos.ps1` religa, a cada 5 minutos, o que tiver caído (ou tudo, logo depois de ligar o computador).
      ```powershell
      powershell -ExecutionPolicy Bypass -File servicos-windows.ps1
      ```

@@ -61,8 +61,11 @@ if (-not (Test-Path "$rg\target\api-regime-geral.jar")) { Write-Host 'Compilando
 if (-not (Test-Path "$sn\target\api-simples-nacional.jar")) { Write-Host 'Compilando o Simples Nacional...'; Rodar $sn { .\mvnw.cmd -B --no-transfer-progress -DskipTests package } }
 if (-not (Test-Path "$df\danfse.exe")) { Write-Host 'Compilando o DANFSe...'; Rodar $df { go build -o danfse.exe ./cmd/danfse } }
 
-# Sem limite, cada Java reserva até 1/4 da memória do computador.
-$java = '-Xmx384m', '-Dspring.profiles.active=offline', '-jar'
+# Memória: sem limite cada Java reserva até 1/4 do computador; coletor simples e JIT leve servem bem a poucos usuários
+# (medido em 28/11/2026: pico das duas de 1.042 para 716 MB, 36 lotes de 450 itens certos).
+# Rede: só aceitam conexão deste computador (o painel), e a porta de administração do Spring (9101/9103) fica desligada.
+$java = '-Xmx256m', '-XX:+UseSerialGC', '-XX:TieredStopAtLevel=1', '-Xss512k', '-XX:ReservedCodeCacheSize=48m',
+  '-Dserver.address=127.0.0.1', '-Dmanagement.server.port=-1', '-Dspring.profiles.active=offline', '-jar'
 Subir 'regime-geral' 8080 'java' $rg ($java + 'target\api-regime-geral.jar')
 Subir 'simples-nacional' 8082 'java' $sn ($java + 'target\api-simples-nacional.jar')
 # SERVER_PORT só para o DANFSe: o Spring também lê essa variável e mudaria a porta dos serviços Java.
