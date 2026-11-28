@@ -91,12 +91,12 @@ As portas ficam presas ao `127.0.0.1`, então só o seu computador acessa.
 ## Como rodar (sem Docker)
 
 1. Suba os três serviços. Você vai precisar de Java 25 (regime geral e Simples), Go 1.27 (DANFSe) e Git; o Maven não, os repositórios trazem o `mvnw`.
-   - **No Windows**, o script faz tudo: clona em `Documents\rfb-servicos`, gera o banco, compila (só na primeira vez) e abre cada serviço numa janela.
+   - **No Windows**, o script faz tudo: clona em `Documents\rfb-servicos`, gera o banco, compila (só na primeira vez) e abre cada serviço e o painel numa janela. O painel lê o login e o e-mail do `.env`. Ele só sobe o que não estiver no ar e limita cada Java a 384 MB de memória. Com `-Oculto` tudo roda sem janela, com a saída em `Documents\rfb-servicos\logs`. É assim que o `vigia-pedidos.ps1` religa, a cada 5 minutos, o que tiver caído (ou tudo, logo depois de ligar o computador).
      ```powershell
      powershell -ExecutionPolicy Bypass -File servicos-windows.ps1
      ```
    - **Em outro sistema**, siga o README de cada repositório. O Simples Nacional usa o mesmo banco do regime geral: copie `calculadora/db/calculadora-pro.db` gerado no regime geral para a mesma pasta dentro do projeto do Simples. O DANFSe também usa a porta 8080 por padrão: rode com `SERVER_PORT=8081`.
-2. Rode o painel (Node 22 ou mais novo, sem `npm install`):
+2. Rode o painel (Node 22 ou mais novo, sem `npm install`; no Windows o script do passo 1 já faz isso):
 
 ```bash
 cd painel
@@ -170,13 +170,15 @@ Se mudar o que é guardado ou por quanto tempo, atualize o aviso.
 
 ### Cópia das contas
 
-Uma vez por dia o `vigia-pedidos.ps1` copia o `usuarios.json` do Docker para `copias-contas/usuarios-AAAA-MM-DD.json`, fora do Git, e guarda as 30 últimas. A cópia tem os e-mails e o hash das senhas. Para voltar uma cópia:
+Uma vez por dia o `vigia-pedidos.ps1` copia o `painel/dados/usuarios.json` para `copias-contas/usuarios-AAAA-MM-DD.json`, fora do Git, e guarda as 30 últimas. A cópia tem os e-mails e o hash das senhas. Para voltar uma cópia, pare o painel antes (ele guarda as contas na memória e regravaria o arquivo), troque o arquivo e suba de novo:
 
 ```powershell
-wsl -e docker cp /mnt/c/Users/pedro/Documents/central-rtc/copias-contas/usuarios-AAAA-MM-DD.json central-rtc-painel-1:/app/dados/usuarios.json
-wsl -e docker exec -u root central-rtc-painel-1 chown node:node /app/dados/usuarios.json
-wsl -e docker restart central-rtc-painel-1
+Get-NetTCPConnection -LocalPort 3000 -State Listen | ForEach-Object { Stop-Process -Id $_.OwningProcess }
+Copy-Item copias-contas\usuarios-AAAA-MM-DD.json painel\dados\usuarios.json
+powershell -ExecutionPolicy Bypass -File servicos-windows.ps1 -Oculto
 ```
+
+No Docker, as contas ficam no volume `contas`: use `docker cp` para o container `central-rtc-painel-1` e reinicie o container.
 
 ## Planilhas do lote
 

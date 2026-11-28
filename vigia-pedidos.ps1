@@ -32,15 +32,28 @@ $t0 = Get-Date '2026-01-01 12:00'
 if (-not (PodeAnalisar @() $t0) -or (PodeAnalisar @(1..10 | ForEach-Object { $t0.AddMinutes(-$_) }) $t0) -or
     -not (PodeAnalisar @(1..10 | ForEach-Object { $t0.AddMinutes(-60 - $_) }) $t0)) { throw 'PodeAnalisar está errada' }
 
-# Cópia diária das contas para fora do Docker: se o volume se perder, as contas voltam daqui (ficam as 30 últimas).
+# Cópia diária das contas para outra pasta: se painel\dados se perder, as contas voltam daqui (ficam as 30 últimas).
 $copias = Join-Path $pasta 'copias-contas'
 function CopiarContas {
   New-Item -ItemType Directory -Force $copias | Out-Null
-  $destino = Join-Path $copias "usuarios-$(Get-Date -Format 'yyyy-MM-dd').json"
-  $noWsl = '/mnt/' + $destino.Substring(0, 1).ToLower() + $destino.Substring(2).Replace('\', '/')
-  & wsl.exe -e docker cp central-rtc-painel-1:/app/dados/usuarios.json $noWsl 2>&1 | Out-Null
-  if ($LASTEXITCODE -ne 0) { return $false }
+  try { Copy-Item (Join-Path $pasta 'painel\dados\usuarios.json') (Join-Path $copias "usuarios-$(Get-Date -Format 'yyyy-MM-dd').json") -ErrorAction Stop }
+  catch { return $false }
   Get-ChildItem $copias -Filter 'usuarios-*.json' | Sort-Object Name -Descending | Select-Object -Skip 30 | Remove-Item
+  $true
+}
+
+# Painel e serviços rodam direto no Windows: se algum cair (ou o computador acabou de ligar), o vigia sobe de novo.
+# Espera 5 minutos entre tentativas, porque os Java levam uns 30 s para abrir a porta.
+$PORTAS = 3000, 8080, 8081, 8082
+function NoAr([int]$porta) {
+  $c = New-Object Net.Sockets.TcpClient
+  try { $c.Connect('127.0.0.1', $porta); $true } catch { $false } finally { $c.Dispose() }
+}
+function ReligarServicos {
+  $fora = @($PORTAS | Where-Object { -not (NoAr $_) })
+  if (-not $fora.Count) { return $false }
+  Registrar "fora do ar: $($fora -join ', '); subindo de novo"
+  Start-Process powershell.exe -WindowStyle Hidden -ArgumentList '-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', "`"$(Join-Path $pasta 'servicos-windows.ps1')`"", '-Oculto'
   $true
 }
 
@@ -65,6 +78,11 @@ while ($true) {
   if ($copiaFeita -ne $hoje) {
     if (CopiarContas) { $copiaFeita = $hoje; LimparRegistros; Registrar 'cópia das contas salva' }
     elseif ($avisouCopia -ne $hoje) { Registrar 'não consegui copiar as contas; tento de novo no próximo minuto'; $avisouCopia = $hoje }
+  }
+  if ((-not $religadoEm -or (Get-Date) -gt $religadoEm.AddMinutes(5)) -and (ReligarServicos)) {
+    $religadoEm = Get-Date
+    Start-Sleep -Seconds 60
+    continue
   }
   $fila = Fila
   if ($LASTEXITCODE -ne 0) {
